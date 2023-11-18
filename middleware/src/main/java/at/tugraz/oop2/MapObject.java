@@ -14,47 +14,36 @@ import java.util.Map;
 public class MapObject {
     String name;
     long id;
-    Geometry geom;
+    Geometry geom = new Geometry();
     Map<String, String> tags;
     String type;
+    public MapObject(){}
 
-    MapObject(){}
+    class Geometry {
+        String type;
+        ArrayList<double[]> coordinates = new ArrayList<>();
+        Crs crs = new Crs();
+        public Geometry(){}
+        class Crs {
+            String type;
+            Map<String, String> properties = new HashMap<>();
+            public Crs(){}
+        }
+
+
+        Geometry(String type, ArrayList<double[]> coords, Crs crs){
+            this.type = type;
+            this.coordinates = coords;
+            this.crs = crs;
+        }
+
+
+    }
 
 
 }
 
-/*class Pointd{
-    Double x_;
-    Double y_;
-    Pointd(Double x, Double y){
-        x_ = x;
-        y_ = y;
-    }
-}*/
 
-@Data
-class Geometry {
-    String type;
-    ArrayList<double[]> coordinates;
-    crsK crs;
 
-    Geometry(){}
-    Geometry(String type, ArrayList<double[]> coords, crsK crs){
-        this.type = type;
-        this.coordinates = coords;
-        this.crs = crs;
-    }
-
-}
-@Data
-class crsK {
-    String type;
-    Map<String, String> properties;
-    crsK(){
-        type = "name";
-        this.properties = new HashMap<>();
-        properties.put("name", "EPSG:0");
-    }
-}
 
 
