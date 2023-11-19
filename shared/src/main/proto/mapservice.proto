@@ -9,7 +9,6 @@ option  java_package="mapserviceGRPC";
 //------------------------------------------------------------------------------------
 
 service mapservice{
-  rpc getObjID (req_ID) returns (MapObject) {}
   rpc getamenities (req_amenity) returns(res_ObjArea) {}
   rpc getroads (req_road) returns (res_ObjArea) {}
   rpc getusage (req_use) returns (res_use) {}
