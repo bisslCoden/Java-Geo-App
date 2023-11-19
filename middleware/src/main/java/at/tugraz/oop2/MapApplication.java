@@ -18,11 +18,8 @@ public class MapApplication {
         //int backend_port;
         try {
              port = Integer.parseInt(serverport);
-             //backend_port = Integer.parseInt(backend);
              if(port < 0 || port > 65535)
                  throw new Exception("Invalid range");
-             //if(backend_port < 0 || backend_port > 65535)
-             //    throw  new Exception("Invalid range");
         }catch (Exception e)
         {
             System.out.println(e);

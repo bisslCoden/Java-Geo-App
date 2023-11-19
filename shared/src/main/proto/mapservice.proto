@@ -1,0 +1,112 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package mapservice;
+option  java_package="mapserviceGRPC";
+
+
+//------------------------------------------------------------------------------------
+// Helper messages
+//------------------------------------------------------------------------------------
+message Coordinate{
+  double x = 1;
+  double y = 2;
+}
+
+message CRS{
+  string  type = 1;
+  map<string,string> properties = 2;
+}
+
+message Geometry{
+  string type = 1;
+  repeated Coordinate coords = 2;
+  CRS crs = 3;
+}
+
+message Usage{
+  string type = 1;
+  double share = 2;
+  double area = 3;
+}
+
+//------------------------------------------------------------------------------------
+// Beginning of requests
+// In the following are the different Requests
+//------------------------------------------------------------------------------------
+message req_ID{
+  int64 ID = 1;
+}
+
+message req_amenity{
+  string amenity = 1;
+  Coordinate bbox_tr = 2;
+  Coordinate bbox_bl = 3;
+  Coordinate point = 4;
+  double dist = 5;
+  uint32 take = 6;
+  uint32 skip = 7;
+}
+
+message req_road {
+  string road = 1;
+  Coordinate bbox_tr = 2;
+  Coordinate bbox_bl = 3;
+  Coordinate point = 4;
+  uint32 take = 6;
+  uint32 skip = 7;
+}
+
+message req_route {
+  uint64 start_ID = 1;
+  uint64 end_ID = 2;
+  bool time = 3;
+}
+
+message req_use{
+  Coordinate bbox_tl = 1;
+  Coordinate bbox_br = 2;
+}
+//------------------------------------------------------------------------------------
+// Beginning of responses
+// In the following the responses
+//------------------------------------------------------------------------------------
+message Object{
+  int64 ID = 1;
+  string name = 2;
+  map<string, string> tags = 3;
+  string type = 4;
+  Geometry geo = 5;
+  repeated int64 children = 6;
+}
+
+message res_ObjArea{
+  repeated Object Objects = 1;
+  uint32 total = 2;
+}
+
+message res_route{
+  double len = 1;
+  double time = 2;
+  repeated Object roads = 3;
+}
+
+message  res_use{
+  double area = 1;
+  repeated Usage users = 2;
+}
+
+message res_err {
+  string error_msg = 1;
+}
+
+//------------------------------------------------------------------------------------
+// Beginning of service routines
+//------------------------------------------------------------------------------------
+
+service mapservice{
+  rpc get_ObjID (req_ID) returns (Object) {}
+  rpc get_amenities (req_amenity) returns(res_ObjArea) {}
+  rpc get_roads (req_road) returns (res_ObjArea) {}
+  rpc get_usage (req_use) returns (res_use) {}
+  rpc calc_route (req_route) returns (res_route) {}
+}
