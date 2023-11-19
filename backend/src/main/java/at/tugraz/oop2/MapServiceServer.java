@@ -12,7 +12,7 @@ public class MapServiceServer {
     private static final Logger logger = Logger.getLogger(MapServiceServer.class.getName());
     private Server server;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         logger.info("Starting backend...");
         var backend_port = System.getenv().getOrDefault("JMAP_BACKEND_PORT", "8020");
         var data_path = System.getenv().getOrDefault("JMAP_BACKEND_OSMFILE", "data/styria_reduced.osm");
@@ -31,14 +31,16 @@ public class MapServiceServer {
         MapLogger.backendStartup(port, data_path);
         final MapServiceServer server = new MapServiceServer();
         server.start(port);
+
         logger.info("ended here");
     }
 
-    private void start(int port) throws IOException{
+    private void start(int port) throws InterruptedException, IOException{
         server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
                 .addService(new MapServiceImpl())
                 .build()
                 .start();
+        server.awaitTermination();
         logger.info("server started");
     }
 }
