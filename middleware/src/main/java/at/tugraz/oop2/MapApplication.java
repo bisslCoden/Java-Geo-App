@@ -18,13 +18,21 @@ import java.util.HashMap;
 
 @SpringBootApplication
 public class MapApplication {
-    private static mapserviceGrpc.mapserviceBlockingStub blockingStub;
+    private static mapserviceGrpc.mapserviceBlockingStub blockingStubInstance;
+
+    public static mapserviceGrpc.mapserviceBlockingStub getStub() {
+        if (blockingStubInstance != null)
+            return blockingStubInstance;
+        else
+            return null;
+    }
 
     public static void main(String[] args) {
         var serverport = System.getenv().getOrDefault("JMAP_MIDDLEWARE_PORT", "8010");
         var backend = System.getenv().getOrDefault("JMAP_BACKEND_TARGET", "localhost:8020");
         int port;
-        //int backend_port;
+
+        //Arg parsing
         try {
              port = Integer.parseInt(serverport);
              if(port < 0 || port > 65535)
@@ -33,21 +41,12 @@ public class MapApplication {
         {
             System.out.println(e);
             port = 8010;
-            //backend = "8020";
         }
 
         MapLogger.middlewareStartup(port, backend);
-        String backend_port = "localhost:8020";
-        ManagedChannel chann = Grpc.newChannelBuilder(backend_port, InsecureChannelCredentials.create())
-                .build();
-        create_backend_conn(chann);
-        req_ID request = req_ID.newBuilder()
-                .setID(12)
-                .build();
-        MapObject response;
-        response = blockingStub.getObjID(request);
+        //setup grpc stub
+        create_backend_conn(backend);
 
-        System.out.println(response.getName());
         System.out.println("Serverport is" + serverport);
         var app = new SpringApplication((MapApplication.class));
         app.setDefaultProperties(Collections.singletonMap("server.port", port));
@@ -55,8 +54,17 @@ public class MapApplication {
         //create samples with dummy data
         app.run();
     }
-    private static void create_backend_conn(Channel channel)
+
+
+    private static void create_backend_conn(String backend_target)
     {
-        blockingStub = mapserviceGrpc.newBlockingStub(channel);
+        if (blockingStubInstance != null)
+            return;
+        else {
+            ManagedChannel chann = Grpc.newChannelBuilder(backend_target, InsecureChannelCredentials.create())
+                    .build();
+            blockingStubInstance = mapserviceGrpc.newBlockingStub(chann);
+            return;
+        }
     }
 }

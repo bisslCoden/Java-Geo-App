@@ -1,5 +1,7 @@
 package at.tugraz.oop2;
 
+import com.google.protobuf.RpcCallback;
+import mapserviceGRPC.req_ID;
 import org.apache.catalina.users.GenericRole;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +20,10 @@ public class MapController {
         return ObjectList.getInstance().getList(Amenitiy.class);
     }
     @GetMapping("/amenities/{id}")
-    Amenitiy getObjectID(@PathVariable long id)
+    Amenitiy getAmenityID(@PathVariable long id)
     {
-        return ObjectList.getInstance().getAmend();
+        Amenitiy requested_amend = (Amenitiy) getObjFromResponse(sendIDRequest(id));
+        return requested_amend;
     }
     @GetMapping("/roads")
     Listresponse getObjectRoad(@RequestParam Map<String, String> params) {
@@ -29,6 +32,38 @@ public class MapController {
 
     @GetMapping("/roads/{id}")
     Road getObjectRoadID(@PathVariable long id) {
-        return ObjectList.getInstance().getRoad();
+        Road requested_road = (Road) getObjFromResponse(sendIDRequest(id));
+        return requested_road;
+    }
+
+    mapserviceGRPC.MapObject sendIDRequest(long id)
+    {
+        var client = MapApplication.getStub();
+        mapserviceGRPC.req_ID request = req_ID.newBuilder()
+                .setID(id)
+                .build();
+        mapserviceGRPC.MapObject response = client.getObjID(request);
+        return response;
+    }
+
+    MapObject getObjFromResponse(mapserviceGRPC.MapObject response){
+        MapObject req_obj;
+        if (response.getAmenity())
+        {
+            req_obj = new Amenitiy(response.getName(), response.getID(),response.getTagsMap(),
+                    response.getType());
+        }
+        else{
+            req_obj = new Road(response.getName(), response.getID(),response.getTagsMap(),
+                    response.getType(), (ArrayList<Long>) response.getChildrenList());
+        }
+
+        ArrayList<Point2D.Double> coords = new ArrayList<>();
+        for (mapserviceGRPC.Coordinate coord : response.getGeo().getCoordsList()) {
+            coords.add(new Point2D.Double(coord.getX(), coord.getY()));
+        }
+        req_obj.setGeo(response.getGeo().getType(), coords, response.getGeo().getCrs().getType(),
+                response.getGeo().getCrs().getPropertiesMap());
+        return req_obj;
     }
 }

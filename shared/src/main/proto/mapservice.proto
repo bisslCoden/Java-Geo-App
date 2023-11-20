@@ -9,6 +9,7 @@ option  java_package="mapserviceGRPC";
 //------------------------------------------------------------------------------------
 
 service mapservice{
+  rpc getObjID (req_ID) returns (MapObject) {}
   rpc getamenities (req_amenity) returns(res_ObjArea) {}
   rpc getroads (req_road) returns (res_ObjArea) {}
   rpc getusage (req_use) returns (res_use) {}
@@ -89,6 +90,7 @@ message MapObject{
   string type = 4;
   Geometry geo = 5;
   repeated int64 children = 6;
+  bool amenity = 7;
 }
 
 message res_ObjArea{

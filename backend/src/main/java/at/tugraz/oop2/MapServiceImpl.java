@@ -1,8 +1,7 @@
 package at.tugraz.oop2;
 
-import mapserviceGRPC.MapObject;
-import mapserviceGRPC.mapserviceGrpc;
-import mapserviceGRPC.req_ID;
+import mapserviceGRPC.*;
+
 import java.util.logging.Logger;
 
 public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
@@ -12,11 +11,24 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
     public void getObjID(mapserviceGRPC.req_ID request,
                   io.grpc.stub.StreamObserver<mapserviceGRPC.MapObject> responseObserver){
         long id = request.getID();
-        logger.info("recieved: " + id);
-        MapObject response = MapObject.newBuilder()
+        logger.info("recieved getObjID request for ID: " + id);
+        //Here we need to connect to the database and fetch the id and stuff...
+        MapObject sample_response = MapObject.newBuilder()
                 .setName("sample_amend")
+                .setID(123456789)
+                .setAmenity(true)
+                .setGeo(Geometry.newBuilder()
+                        .setType("point")
+                        .setCoords(0, Coordinate.newBuilder()
+                                        .setX(0.01111)
+                                        .setY(2.3344)
+                                        .build())
+                        .setCrs(CRS.newBuilder()
+                                .setType("idk")
+                                .build())
+                        .build())
                 .build();
-        responseObserver.onNext(response);
+        responseObserver.onNext(sample_response);
         responseObserver.onCompleted();
     }
 }
