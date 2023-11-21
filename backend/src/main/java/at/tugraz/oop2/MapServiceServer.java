@@ -33,6 +33,8 @@ public class MapServiceServer {
         server.start(port);
 
         logger.info("ended here");
+        DataLoader.Load("data/styria_reduced.osm");
+        logger.info("Stoping backend...");
     }
 
     private void start(int port) throws InterruptedException, IOException{
