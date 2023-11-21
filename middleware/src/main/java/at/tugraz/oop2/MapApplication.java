@@ -2,7 +2,6 @@ package at.tugraz.oop2;
 
 import io.grpc.Channel;
 import io.grpc.Grpc;
-import mapserviceGRPC.MapObject;
 import mapserviceGRPC.req_ID;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;

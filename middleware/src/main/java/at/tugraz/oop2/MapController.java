@@ -1,6 +1,7 @@
 package at.tugraz.oop2;
 
 import com.google.protobuf.RpcCallback;
+import mapserviceGRPC.MapObjectRPC;
 import mapserviceGRPC.req_ID;
 import org.apache.catalina.users.GenericRole;
 import org.locationtech.jts.geom.Coordinate;
@@ -23,6 +24,7 @@ public class MapController {
     Amenitiy getAmenityID(@PathVariable long id)
     {
         Amenitiy requested_amend = (Amenitiy) getObjFromResponse(sendIDRequest(id));
+        System.out.println("attempting to return amend");
         return requested_amend;
     }
     @GetMapping("/roads")
@@ -36,17 +38,17 @@ public class MapController {
         return requested_road;
     }
 
-    mapserviceGRPC.MapObject sendIDRequest(long id)
+    MapObjectRPC sendIDRequest(long id)
     {
         var client = MapApplication.getStub();
         mapserviceGRPC.req_ID request = req_ID.newBuilder()
                 .setID(id)
                 .build();
-        mapserviceGRPC.MapObject response = client.getObjID(request);
+        MapObjectRPC response = client.getObjID(request);
         return response;
     }
 
-    MapObject getObjFromResponse(mapserviceGRPC.MapObject response){
+    MapObject getObjFromResponse(MapObjectRPC response){
         MapObject req_obj;
         if (response.getAmenity())
         {
@@ -59,9 +61,9 @@ public class MapController {
         }
 
         System.out.println("now tryin to get the coords");
-        ArrayList<Point2D.Double> coords = new ArrayList<>();
+        ArrayList<double[]> coords = new ArrayList<>();
         for (mapserviceGRPC.Coordinate coord : response.getGeo().getCoordsList()) {
-            coords.add(new Point2D.Double(coord.getX(), coord.getY()));
+            coords.add(new double[]{coord.getX(), coord.getY()});
         }
         req_obj.setGeo(response.getGeo().getType(), coords, response.getGeo().getCrs().getType(),
                 response.getGeo().getCrs().getPropertiesMap());

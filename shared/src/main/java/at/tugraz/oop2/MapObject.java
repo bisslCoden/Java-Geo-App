@@ -18,19 +18,21 @@ public class MapObject {
     Map<String, String> tags = new HashMap<>();
     String type;
     public MapObject(){}
-    public void setGeo(String type, ArrayList<Point2D.Double> coords, String Crstype, Map<String, String> Crsprop)
+    public void setGeo(String type, ArrayList<double[]> coords, String Crstype, Map<String, String> Crsprop)
     {
         this.geom.type = type;
         this.geom.coordinates = coords;
         this.geom.crs.type = Crstype;
         this.geom.crs.properties = Crsprop;
     }
-    class Geometry {
+    @Data
+    public class Geometry {
         String type;
-        ArrayList<Point2D.Double> coordinates = new ArrayList<>();
+        ArrayList<double[]> coordinates = new ArrayList<>();
         Crs crs = new Crs();
         public Geometry(){}
-        class Crs {
+        @Data
+        public class Crs {
             String type;
             Map<String, String> properties = new HashMap<>();
             public Crs(){}
