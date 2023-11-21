@@ -10,6 +10,13 @@ import java.util.Map;
 
 public class MapData {
     // TODO: change to actual types (these are types used to parse the xml file - temp copies)
+    private static MapData instance_ = null;
+
+    public static MapData instance(){
+        if (instance_ == null)
+            instance_ = new MapData();
+        return instance_;
+    };
     static public class Node {
         public Node() {
             tags = new HashMap<String, String>();
@@ -45,8 +52,7 @@ public class MapData {
 
     // TODO: remove temps (used to demonstrate interface with the data object)
     enum Weight {};
-    class Road {};
-    class Amenity {};
+
     class Route {};
     class Usage {};
     class PortableNetworkGraphic {};
@@ -54,14 +60,14 @@ public class MapData {
     // methods
     // TODO: parameters might change (e.g. Point to x and y)
     // roads
-    public Road getRoad(Long id) { return new Road(); };
-    public Road[] getRoads(Rect boundingBox) { return new Road[0]; }
+    public Road getRoad(Long id) { return null; };
+    public Road[] getRoads(Rect boundingBox) { return null; }
 
     // amenities
     // TODO: add parameter for type restriction
-    public Amenity getAmenity(Long id) { return new Amenity(); };
-    public Amenity[] getAmenities(Rect boundingBox) { return new Amenity[0]; }
-    public Amenity[] getAmenities(Point location, Double range) { return new Amenity[0]; }
+    public Amenitiy getAmenity(Long id) { return null; };
+    public Amenitiy[] getAmenities(Rect boundingBox) { return null; }
+    public Amenitiy[] getAmenities(Point location, Double range) { return null; }
 
     // TODO: rendering might be implemented in the background in combination with the dataset
     public PortableNetworkGraphic getTile(Point location) { return new PortableNetworkGraphic(); }
