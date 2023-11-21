@@ -13,16 +13,17 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         long id = request.getID();
         logger.info("recieved getObjID request for ID: " + id);
         //Here we need to connect to the database and fetch the id and stuff...
+        Coordinate sample_cord = Coordinate.newBuilder()
+                .setX(0.01111)
+                .setY(2.3344)
+                .build();
         MapObject sample_response = MapObject.newBuilder()
                 .setName("sample_amend")
-                .setID(123456789)
+                .setID(id)
                 .setAmenity(true)
                 .setGeo(Geometry.newBuilder()
                         .setType("point")
-                        .setCoords(0, Coordinate.newBuilder()
-                                        .setX(0.01111)
-                                        .setY(2.3344)
-                                        .build())
+                        .addCoords(sample_cord)
                         .setCrs(CRS.newBuilder()
                                 .setType("idk")
                                 .build())

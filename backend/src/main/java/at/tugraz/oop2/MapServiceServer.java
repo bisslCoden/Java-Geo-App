@@ -40,8 +40,8 @@ public class MapServiceServer {
                 .addService(new MapServiceImpl())
                 .build()
                 .start();
-        server.awaitTermination();
         logger.info("server started");
+        server.awaitTermination();
     }
 }
 

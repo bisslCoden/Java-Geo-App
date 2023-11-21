@@ -58,12 +58,14 @@ public class MapController {
                     response.getType(), (ArrayList<Long>) response.getChildrenList());
         }
 
+        System.out.println("now tryin to get the coords");
         ArrayList<Point2D.Double> coords = new ArrayList<>();
         for (mapserviceGRPC.Coordinate coord : response.getGeo().getCoordsList()) {
             coords.add(new Point2D.Double(coord.getX(), coord.getY()));
         }
         req_obj.setGeo(response.getGeo().getType(), coords, response.getGeo().getCrs().getType(),
                 response.getGeo().getCrs().getPropertiesMap());
+        System.out.println("got all i need");
         return req_obj;
     }
 }
