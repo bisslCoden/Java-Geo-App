@@ -10,8 +10,8 @@ option  java_package="mapserviceGRPC";
 
 service mapservice{
   rpc getObjID (req_ID) returns (MapObjectRPC) {}
-  rpc getamenities (req_amenity) returns(res_ObjArea) {}
-  rpc getroads (req_road) returns (res_ObjArea) {}
+  rpc getObjBbox (req_Obj_bbox) returns(res_ObjArea) {}
+  rpc getAmenitiyPoint (req_amenity_point) returns (res_ObjArea) {}
   rpc getusage (req_use) returns (res_use) {}
   rpc calcroute (req_route) returns (res_route) {}
 }
@@ -50,24 +50,25 @@ message req_ID{
   int64 ID = 1;
 }
 
-message req_amenity{
-  string amenity = 1;
+message req_Obj_bbox{
+  string type = 1;
   Coordinate bbox_tr = 2;
   Coordinate bbox_bl = 3;
-  Coordinate point = 4;
-  double dist = 5;
-  uint32 take = 6;
-  uint32 skip = 7;
+  bool amenity = 4;
+  uint64 take = 6;
+  uint64 skip = 7;
 }
 
-message req_road {
-  string road = 1;
-  Coordinate bbox_tr = 2;
-  Coordinate bbox_bl = 3;
-  Coordinate point = 4;
-  uint32 take = 6;
-  uint32 skip = 7;
+
+message req_amenity_point{
+  string type = 1;
+  Coordinate point = 2;
+  double dist = 3;
+  uint64 take = 5;
+  uint64 skip = 6;
 }
+
+
 
 message req_route {
   uint64 start_ID = 1;
@@ -95,7 +96,7 @@ message MapObjectRPC{
 
 message res_ObjArea{
   repeated MapObjectRPC Objects = 1;
-  uint32 total = 2;
+  uint64 total = 2;
 }
 
 message res_route{
