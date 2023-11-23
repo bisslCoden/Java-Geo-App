@@ -48,6 +48,7 @@ message Usage{
 //------------------------------------------------------------------------------------
 message req_ID{
   int64 ID = 1;
+  bool amenity = 2;
 }
 
 message req_Obj_bbox{

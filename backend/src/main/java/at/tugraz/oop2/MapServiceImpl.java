@@ -1,6 +1,7 @@
 package at.tugraz.oop2;
 
 import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
 import mapserviceGRPC.*;
 
 import java.util.logging.Logger;
@@ -14,7 +15,11 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         long id = request.getID();
         logger.info("recieved getObjID request for ID: " + id);
         //Here we need to connect to the database and fetch the id and stuff...
-        MapObjectRPC response =  gRPCBackend.buildResponse((MapObject) MapData.instance().getAmenity(id), true);
+        MapObjectRPC response;
+        if (request.getAmenity())
+            response =  gRPCBackend.buildResponse((MapObject) MapData.instance().getAmenity(id), true);
+        else
+            response = gRPCBackend.buildResponse((MapObject) MapData.instance().getRoad(id), false);
         if (response == null)
         {
             Status err = Status.INTERNAL.withDescription("could not find");
@@ -24,5 +29,13 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void getObjBbox(req_Obj_bbox request, StreamObserver<res_ObjArea> responseObserver) {
 
+    }
+
+    @Override
+    public void getAmenitiyPoint(req_amenity_point request, StreamObserver<res_ObjArea> responseObserver) {
+
+    }
 }
