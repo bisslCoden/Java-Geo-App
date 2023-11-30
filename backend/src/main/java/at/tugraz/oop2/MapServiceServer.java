@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 public class MapServiceServer {
-    private static final Logger logger = Logger.getLogger(MapServiceServer.class.getName());
+    public static final Logger logger = Logger.getLogger(MapServiceServer.class.getName());
     private Server server;
 
     public static void main(String[] args) throws IOException, InterruptedException {

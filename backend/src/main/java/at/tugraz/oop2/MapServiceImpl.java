@@ -61,12 +61,15 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
 
     @Override
     public void getAmenitiyPoint(req_amenity_point request, StreamObserver<res_ObjArea> responseObserver) {
+        System.out.println("in amend req");
         Point2D.Double point = new Point2D.Double(request.getPoint().getX(), request.getPoint().getY());
         double range = request.getDist();
+        MapServiceServer.logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
         MapObject[] result = MapData.instance().getAmenities(point, range);
         res_ObjArea.Builder response = res_ObjArea.newBuilder();
         if (result == null)
         {
+            MapServiceServer.logger.info("\tERROR: could not find specified Point. Sending back Error...");
             Status err = Status.INTERNAL.withDescription("could not find");
             responseObserver.onError(err.asRuntimeException());
         }

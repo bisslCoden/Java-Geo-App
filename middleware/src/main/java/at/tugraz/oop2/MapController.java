@@ -33,12 +33,22 @@ public class MapController {
         Long take = DEFAULT_TAKE;
         parsed_params(){}
     }
+
+    @Data
+    public class sample_err{
+        int type = 404;
+        String msg = "Not implemented but this is an error!";
+        sample_err(){}
+    }
     @GetMapping("/amenities")
     Listresponse getObjectList(@RequestParam Map<String, String> params){
         //errorhandling implement:
         //check if there is either point + d or bbox points
         //please then set this var to which type we need to process
         parsed_params pp = new parsed_params();
+        pp.bbox = false;
+        pp.point = new double[]{1.1, 1.1};
+        pp.dist = 1.20;
         //Errorhandling: set pp :D
 
         Listresponse requested_List = null;
@@ -54,8 +64,12 @@ public class MapController {
             try{
                 requested_List = Utils.transformListResponse(gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
                         pp.getTake(), pp.getSkip()), pp.getSkip(), pp.getTake());
-            } catch (Exception e){
-                System.out.println(e);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                Listresponse err = new Listresponse();
+                err.setErrno(404);
+                err.setMsg("not implemented but err");
+                return err;
             }
         }
         return requested_List;
