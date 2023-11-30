@@ -30,10 +30,10 @@ public class MapServiceServer {
 
         MapLogger.backendStartup(port, data_path);
         final MapServiceServer server = new MapServiceServer();
+        DataLoader.Load("data/styria_reduced.osm");
         server.start(port);
 
         logger.info("ended here");
-        DataLoader.Load("data/styria_reduced.osm");
         logger.info("Stoping backend...");
     }
 

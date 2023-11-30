@@ -3,6 +3,8 @@ package at.tugraz.oop2;
 import org.w3c.dom.css.Rect;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,13 +63,13 @@ public class MapData {
     // TODO: parameters might change (e.g. Point to x and y)
     // roads
     public Road getRoad(Long id) { return null; };
-    public Road[] getRoads(Rect boundingBox) { return null; }
+    public Road[] getRoads(Rectangle2D.Double boundingBox) { return null; }
 
     // amenities
     // TODO: add parameter for type restriction
     public Amenitiy getAmenity(Long id) { return null; };
-    public Amenitiy[] getAmenities(Rect boundingBox) { return null; }
-    public Amenitiy[] getAmenities(Point location, Double range) { return null; }
+    public Amenitiy[] getAmenities(Rectangle2D.Double boundingBox) { return null; }
+    public Amenitiy[] getAmenities(Point2D.Double location, Double range) { return null; }
 
     // TODO: rendering might be implemented in the background in combination with the dataset
     public PortableNetworkGraphic getTile(Point location) { return new PortableNetworkGraphic(); }

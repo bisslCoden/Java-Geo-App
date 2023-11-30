@@ -24,8 +24,8 @@ public class gRPCMiddleware {
         mapserviceGRPC.res_ObjArea response = null;
         var client = MapApplication.getStub();
         mapserviceGRPC.req_Obj_bbox request = req_Obj_bbox.newBuilder()
-                .setBboxTr(Coordinate.newBuilder().setX(bbox_tl[0]).setY(bbox_tl[1]))
-                .setBboxBl(Coordinate.newBuilder().setX(bbox_br[0]).setY(bbox_br[1]))
+                .setBboxTl(Coordinate.newBuilder().setX(bbox_tl[0]).setY(bbox_tl[1]))
+                .setBboxBr(Coordinate.newBuilder().setX(bbox_br[0]).setY(bbox_br[1]))
                 .setAmenity(amenity)
                 .setType(type)
                 .setSkip(skip)

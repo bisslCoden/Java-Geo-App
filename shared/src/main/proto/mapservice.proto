@@ -53,8 +53,8 @@ message req_ID{
 
 message req_Obj_bbox{
   string type = 1;
-  Coordinate bbox_tr = 2;
-  Coordinate bbox_bl = 3;
+  Coordinate bbox_tl = 2;
+  Coordinate bbox_br = 3;
   bool amenity = 4;
   uint64 take = 6;
   uint64 skip = 7;

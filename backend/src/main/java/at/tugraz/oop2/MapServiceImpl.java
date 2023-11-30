@@ -3,7 +3,11 @@ package at.tugraz.oop2;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import mapserviceGRPC.*;
+import org.w3c.dom.css.Rect;
 
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.logging.Logger;
 
 public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
@@ -25,17 +29,54 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             Status err = Status.INTERNAL.withDescription("could not find");
             responseObserver.onError(err.asRuntimeException());
         }
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        else
+            responseObserver.onNext(response);
     }
 
     @Override
     public void getObjBbox(req_Obj_bbox request, StreamObserver<res_ObjArea> responseObserver) {
+        Rectangle2D.Double BBox = new Rectangle2D.Double(request.getBboxTl().getX(), request.getBboxTl().getY(),
+                (request.getBboxBr().getX()-request.getBboxTl().getX()),
+                (request.getBboxBr().getY() - request.getBboxTl().getY()));
+        MapObject[] result;
+        res_ObjArea.Builder response = res_ObjArea.newBuilder();
+        if (request.getAmenity())
+            result = MapData.instance().getAmenities(BBox);
+        else
+            result = MapData.instance().getRoads(BBox);
+        if (result == null)
+        {
+            Status err = Status.INTERNAL.withDescription("could not find");
+            responseObserver.onError(err.asRuntimeException());
+        }
+        else
+        {
+            for (var obj : result)
+                response.addObjects(gRPCBackend.buildResponse(obj, request.getAmenity()));
 
+            response.setTotal(result.length);
+            responseObserver.onNext(response.build());
+        }
     }
 
     @Override
     public void getAmenitiyPoint(req_amenity_point request, StreamObserver<res_ObjArea> responseObserver) {
+        Point2D.Double point = new Point2D.Double(request.getPoint().getX(), request.getPoint().getY());
+        double range = request.getDist();
+        MapObject[] result = MapData.instance().getAmenities(point, range);
+        res_ObjArea.Builder response = res_ObjArea.newBuilder();
+        if (result == null)
+        {
+            Status err = Status.INTERNAL.withDescription("could not find");
+            responseObserver.onError(err.asRuntimeException());
+        }
+        else
+        {
+            for (var obj : result)
+                response.addObjects(gRPCBackend.buildResponse(obj, true));
+            response.setTotal(result.length);
+            responseObserver.onNext(response.build());
+        }
 
     }
 }
