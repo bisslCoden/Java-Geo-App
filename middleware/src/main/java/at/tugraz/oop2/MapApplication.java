@@ -60,10 +60,14 @@ public class MapApplication {
         if (blockingStubInstance != null)
             return;
         else {
-            ManagedChannel chann = Grpc.newChannelBuilder(backend_target, InsecureChannelCredentials.create())
-                    .build();
-            blockingStubInstance = mapserviceGrpc.newBlockingStub(chann);
-            return;
+            try {
+                ManagedChannel chann = Grpc.newChannelBuilder(backend_target, InsecureChannelCredentials.create())
+                        .build();
+                blockingStubInstance = mapserviceGrpc.newBlockingStub(chann);
+            }
+            catch (Exception e) {
+                System.out.println("OOOH Exception: " + e.getMessage());
+            }
         }
     }
 }

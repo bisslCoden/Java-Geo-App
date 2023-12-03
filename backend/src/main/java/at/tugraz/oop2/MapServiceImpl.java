@@ -1,5 +1,6 @@
 package at.tugraz.oop2;
 
+import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import mapserviceGRPC.*;
@@ -8,6 +9,8 @@ import org.w3c.dom.css.Rect;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
@@ -26,7 +29,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             response = gRPCBackend.buildResponse((MapObject) MapData.instance().getRoad(id), false);
         if (response == null)
         {
-            Status err = Status.INTERNAL.withDescription("could not find");
+            Status err = Status.INTERNAL.withDescription("404");
             responseObserver.onError(err.asRuntimeException());
         }
         else
@@ -46,7 +49,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             result = MapData.instance().getRoads(BBox);
         if (result == null)
         {
-            Status err = Status.INTERNAL.withDescription("could not find");
+            Status err = Status.INTERNAL.withDescription("404");
             responseObserver.onError(err.asRuntimeException());
         }
         else
@@ -60,7 +63,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
     }
 
     @Override
-    public void getAmenitiyPoint(req_amenity_point request, StreamObserver<res_ObjArea> responseObserver) {
+    public void getAmenityPoint(req_amenity_point request, StreamObserver<res_ObjArea> responseObserver) {
         System.out.println("in amend req");
         Point2D.Double point = new Point2D.Double(request.getPoint().getX(), request.getPoint().getY());
         double range = request.getDist();
@@ -70,7 +73,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         if (result == null)
         {
             MapServiceServer.logger.info("\tERROR: could not find specified Point. Sending back Error...");
-            Status err = Status.INTERNAL.withDescription("could not find");
+            Status err = Status.INTERNAL.withDescription("404");
             responseObserver.onError(err.asRuntimeException());
         }
         else
@@ -81,5 +84,18 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             responseObserver.onNext(response.build());
         }
 
+    }
+
+    @Override
+    public void getImage (req_image request, StreamObserver<PNG_image> responseObserver)
+    {
+        List<String> filters = new ArrayList<>();
+        PNG_image response = null;
+        for(var s : request.getFiltersList())
+            filters.add(s);
+        ByteString g = MapData.instance().getTile(request.getZoom(),
+                new Point2D.Double(request.getTile().getX(), request.getTile().getY()), filters);
+        response = PNG_image.newBuilder().setImageData(g).build();
+        responseObserver.onNext(response);
     }
 }

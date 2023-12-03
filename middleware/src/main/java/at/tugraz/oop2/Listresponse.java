@@ -7,7 +7,7 @@ import java.util.Map;
 
 @Data
 public class Listresponse {
-    int errno;
+    String errno;
     String msg;
     ArrayList<MapObject> entries;
     Map<String, Long> paging;

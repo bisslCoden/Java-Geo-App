@@ -1,5 +1,6 @@
 package at.tugraz.oop2;
 
+import com.google.protobuf.ByteString;
 import org.w3c.dom.css.Rect;
 
 import java.awt.*;
@@ -72,7 +73,8 @@ public class MapData {
     public Amenitiy[] getAmenities(Point2D.Double location, Double range) { return null; }
 
     // TODO: rendering might be implemented in the background in combination with the dataset
-    public PortableNetworkGraphic getTile(Point location) { return new PortableNetworkGraphic(); }
+    public ByteString getTile(double zoom, Point2D.Double location, List<String> filters)
+    { return null; }
 
     // route (A2)
     public Route getRoute(Long from, Long to, Weight w) { return new Route(); }

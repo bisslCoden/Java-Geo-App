@@ -11,9 +11,10 @@ option  java_package="mapserviceGRPC";
 service mapservice{
   rpc getObjID (req_ID) returns (MapObjectRPC) {}
   rpc getObjBbox (req_Obj_bbox) returns(res_ObjArea) {}
-  rpc getAmenitiyPoint (req_amenity_point) returns (res_ObjArea) {}
-  rpc getusage (req_use) returns (res_use) {}
-  rpc calcroute (req_route) returns (res_route) {}
+  rpc getAmenityPoint (req_amenity_point) returns (res_ObjArea) {}
+  rpc getUsage (req_use) returns (res_use) {}
+  rpc calcRoute (req_route) returns (res_route) {}
+  rpc getImage (req_image) returns (PNG_image) {}
 }
 
 
@@ -81,6 +82,12 @@ message req_use{
   Coordinate bbox_tl = 1;
   Coordinate bbox_br = 2;
 }
+
+message req_image{
+  double zoom = 1;
+  Coordinate tile = 2;
+  repeated string filters = 3;
+}
 //------------------------------------------------------------------------------------
 // Beginning of responses
 // In the following the responses
@@ -113,5 +120,9 @@ message  res_use{
 
 message res_err {
   string error_msg = 1;
+}
+
+message PNG_image{
+  bytes image_data = 1;
 }
 

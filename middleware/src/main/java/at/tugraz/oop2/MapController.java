@@ -1,5 +1,6 @@
 package at.tugraz.oop2;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.RpcCallback;
 import lombok.Data;
 import mapserviceGRPC.*;
@@ -67,7 +68,7 @@ public class MapController {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 Listresponse err = new Listresponse();
-                err.setErrno(404);
+                err.setErrno(e.getMessage().equals("INTERNAL: 404") ? "404" : "500");
                 err.setMsg("not implemented but err");
                 return err;
             }
@@ -104,6 +105,17 @@ public class MapController {
         return requested_road;
     }
 
+    @GetMapping("/tile/{z}/{x}/{y}.png")
+    ByteString getIMG(@PathVariable double z, @PathVariable double x, @PathVariable double y, @RequestParam List<String> filters){
+        mapserviceGRPC.PNG_image response = null;
+        try {
+            response = gRPCMiddleware.request_Image(z, new double[]{x,y}, filters);
+        }catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+        return response.getImageData();
+    }
     //------------------------------------------------------------------------------------
     // Beginning of GRPC requests
     // Code for making reqests to backend

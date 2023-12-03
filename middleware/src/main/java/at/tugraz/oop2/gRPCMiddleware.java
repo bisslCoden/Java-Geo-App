@@ -2,6 +2,8 @@ package at.tugraz.oop2;
 
 import mapserviceGRPC.*;
 
+import java.util.List;
+
 public class gRPCMiddleware {
     static MapObjectRPC requestObjID(long id)
     {
@@ -13,7 +15,7 @@ public class gRPCMiddleware {
         try {
             response = client.getObjID(request);
         }catch (Exception e){
-            System.out.println(e);
+            System.out.println("ECEEEPT" + e.getMessage());
             return null;
         }
         return response;
@@ -34,7 +36,7 @@ public class gRPCMiddleware {
         try {
             response = client.getObjBbox(request);
         }catch (Exception e){
-            System.out.println(e);
+            System.out.println("ECEEEPT" + e.getMessage());
             return null;
         }
         return  response;
@@ -52,12 +54,29 @@ public class gRPCMiddleware {
                 .setTake(take)
                 .build();
         try {
-            response = client.getAmenitiyPoint(request);
+            response = client.getAmenityPoint(request);
         }catch (Exception e) {
-            System.out.println(e);
-            return null;
+            throw e;
         }
         return response;
+    }
+
+    static PNG_image request_Image(double zoom,double[] point, List<String> filters){
+        PNG_image resp_PNG = null;
+        var client = MapApplication.getStub();
+        req_image.Builder request = req_image.newBuilder()
+                .setTile(Coordinate.newBuilder().setX(point[0]).setY(point[1]).build())
+                .setZoom(zoom);
+        for(var s : filters)
+            request.addFilters(s);
+        try {
+            resp_PNG = client.getImage(request.build());
+        }
+        catch (Exception e)
+        {
+            throw e;
+        }
+        return resp_PNG;
     }
 
 }
