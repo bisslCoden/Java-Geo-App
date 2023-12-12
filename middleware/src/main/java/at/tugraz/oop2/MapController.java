@@ -1,20 +1,11 @@
 package at.tugraz.oop2;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.RpcCallback;
 import lombok.Data;
-import mapserviceGRPC.*;
-import org.apache.catalina.users.GenericRole;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Logger;
 
 @RestController
 public class MapController {
@@ -76,10 +67,10 @@ public class MapController {
         return requested_List;
     }
     @GetMapping("/amenities/{id}")
-    Amenitiy getAmenityID(@PathVariable long id)
+    Amenity getAmenityID(@PathVariable long id)
     {
         //Errorhandling: if anything goes wrong in the backend requested_amend will just be null
-        Amenitiy requested_amend = (Amenitiy) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id));
+        Amenity requested_amend = (Amenity) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id));
         return requested_amend;
     }
     @GetMapping("/roads")

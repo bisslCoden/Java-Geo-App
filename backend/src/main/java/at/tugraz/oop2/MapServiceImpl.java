@@ -24,9 +24,9 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         //Here we need to connect to the database and fetch the id and stuff...
         MapObjectRPC response;
         if (request.getAmenity())
-            response =  gRPCBackend.buildResponse((MapObject) MapData.instance().getAmenity(id), true);
+            response =  gRPCBackend.buildResponse((MapObject) Map.getInstance().getAmenity(id), true);
         else
-            response = gRPCBackend.buildResponse((MapObject) MapData.instance().getRoad(id), false);
+            response = gRPCBackend.buildResponse((MapObject) Map.getInstance().getRoad(id), false);
         if (response == null)
         {
             Status err = Status.INTERNAL.withDescription("404");
@@ -44,9 +44,9 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         MapObject[] result;
         res_ObjArea.Builder response = res_ObjArea.newBuilder();
         if (request.getAmenity())
-            result = MapData.instance().getAmenities(BBox);
+            result = Map.getInstance().getAmenities(BBox, request.getType(), (int) request.getSkip(), (int) request.getTake());
         else
-            result = MapData.instance().getRoads(BBox);
+            result = Map.getInstance().getRoads(BBox, request.getType(), (int) request.getSkip(), (int) request.getTake());
         if (result == null)
         {
             Status err = Status.INTERNAL.withDescription("404");
@@ -68,7 +68,8 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         Point2D.Double point = new Point2D.Double(request.getPoint().getX(), request.getPoint().getY());
         double range = request.getDist();
         MapServiceServer.logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
-        MapObject[] result = MapData.instance().getAmenities(point, range);
+        MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), (int) request.getSkip(),
+                (int)request.getTake());
         res_ObjArea.Builder response = res_ObjArea.newBuilder();
         if (result == null)
         {
@@ -93,8 +94,8 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         PNG_image response = null;
         for(var s : request.getFiltersList())
             filters.add(s);
-        ByteString g = MapData.instance().getTile(request.getZoom(),
-                new Point2D.Double(request.getTile().getX(), request.getTile().getY()), filters);
+        ByteString g = Map.getInstance().getTile(request.getTile().getX(), request.getTile().getY(), request.getZoom(),
+                filters);
         response = PNG_image.newBuilder().setImageData(g).build();
         responseObserver.onNext(response);
     }

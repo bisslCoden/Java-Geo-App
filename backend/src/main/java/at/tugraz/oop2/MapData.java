@@ -1,85 +1,60 @@
 package at.tugraz.oop2;
 
-import com.google.protobuf.ByteString;
-import org.w3c.dom.css.Rect;
-
-import java.awt.*;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MapData {
     // TODO: change to actual types (these are types used to parse the xml file - temp copies)
-    private static MapData instance_ = null;
-
-    public static MapData instance(){
-        if (instance_ == null)
-            instance_ = new MapData();
-        return instance_;
-    };
-    static public class Node {
-        public Node() {
-            tags = new HashMap<String, String>();
-        };
-        Long id;
-        Double longitude; // x-coordinate
-        Double latitude;  // y-coordinate
-        Map<String, String> tags;
-    };
-    static public class Way {
-        public Way() {
-            references = new ArrayList<Long>();
-            tags = new HashMap<String, String>();
-        };
-        Long id;
-        List<Long> references;
-        Map<String, String> tags;
-    };
-    static public class Relation {
-        public Relation() {
-            inner_relations = new ArrayList<Long>();
-            outer_relations = new ArrayList<Long>();
-            inner_ways = new ArrayList<Long>();
-            outer_ways = new ArrayList<Long>();
-        };
-        List<Long> inner_relations;
-        List<Long> outer_relations;
-        List<Long> inner_ways;
-        List<Long> outer_ways;
-        Long id;
-        Map<String, String> tags;
-    };
-
-    // TODO: remove temps (used to demonstrate interface with the data object)
-    enum Weight {};
-
-    class Route {};
-    class Usage {};
-    class PortableNetworkGraphic {};
+    public MapData(List<Road> roads, List<Amenity> amenities) {
+        _roads = roads;
+        _amenities = amenities;
+    }
 
     // methods
-    // TODO: parameters might change (e.g. Point to x and y)
-    // roads
-    public Road getRoad(Long id) { return null; };
-    public Road[] getRoads(Rectangle2D.Double boundingBox) { return null; }
+    public Amenity getAmenity(Long id) {
+        for(Amenity amenity : _amenities)
+            if(amenity.id == id) return amenity;
+        return null; // TODO: be more explicit with exceptions
+    }
+    public Amenity[] getAmenities(Rectangle2D.Double bbox, String type, Integer skip, Integer take) {
+        List<Amenity> result = new ArrayList<Amenity>();
 
-    // amenities
-    // TODO: add parameter for type restriction
-    public Amenitiy getAmenity(Long id) { return null; };
-    public Amenitiy[] getAmenities(Rectangle2D.Double boundingBox) { return null; }
-    public Amenitiy[] getAmenities(Point2D.Double location, Double range) { return null; }
+        for(Amenity amenity : _amenities) {
+            // filter
+            if(amenity.type != type) continue;
+            if(!isInside(bbox, amenity.geom)) continue;
 
-    // TODO: rendering might be implemented in the background in combination with the dataset
-    public ByteString getTile(double zoom, Point2D.Double location, List<String> filters)
-    { return null; }
+            result.add(amenity);
+        }
 
-    // route (A2)
-    public Route getRoute(Long from, Long to, Weight w) { return new Route(); }
+        return result.toArray(new Amenity[0]);
+    }
 
-    // usage (A2)
-    public Usage getUsage(Rect boundingBox) { return new Usage(); }
+    public Road getRoad(Long id) {
+        for(Road road : _roads)
+            if(road.id == id) return road;
+        return null; // TODO: be more explicit with exceptions
+    }
+    public Road[] getRoads(Rectangle2D.Double bbox, String type, Integer skip, Integer take) {
+        List<Road> result = new ArrayList<Road>();
 
+        for(Road road : _roads) {
+            // filter
+            if(road.type != type) continue;
+            if(!isInside(bbox, road.geom)) continue;
+
+            result.add(road);
+        }
+
+        return result.toArray(new Road[0]);
+    }
+
+    private boolean isInside(Rectangle2D.Double bbox, MapObject.Geometry geom) {
+        return true; // TODO: implement
+    }
+
+    // member
+    private List<Road> _roads = new ArrayList<Road>();
+    private List<Amenity> _amenities = new ArrayList<Amenity>();
 }

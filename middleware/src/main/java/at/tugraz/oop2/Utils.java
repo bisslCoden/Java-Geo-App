@@ -22,7 +22,7 @@ public class Utils {
             return null;
         if (response.getAmenity())
         {
-            req_obj = new Amenitiy(response.getName(), response.getID(),response.getTagsMap(),
+            req_obj = new Amenity(response.getName(), response.getID(),response.getTagsMap(),
                     response.getType());
         }
         else{
