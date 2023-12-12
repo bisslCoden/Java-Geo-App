@@ -13,8 +13,12 @@ public class MapData {
 
     // methods
     public Amenity getAmenity(Long id) {
+        System.out.println("in amenity search: " + id + "  " + _amenities.size());
         for(Amenity amenity : _amenities)
+        {
+            System.out.println(amenity.id);
             if(amenity.id == id) return amenity;
+        }
         return null; // TODO: be more explicit with exceptions
     }
     public Amenity[] getAmenities(Rectangle2D.Double bbox, String type, Integer skip, Integer take) {

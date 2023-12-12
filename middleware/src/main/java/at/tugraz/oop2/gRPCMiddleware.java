@@ -5,12 +5,13 @@ import mapserviceGRPC.*;
 import java.util.List;
 
 public class gRPCMiddleware {
-    static MapObjectRPC requestObjID(long id)
+    static MapObjectRPC requestObjID(long id, boolean amenity)
     {
         MapObjectRPC response;
         var client = MapApplication.getStub();
         mapserviceGRPC.req_ID request = req_ID.newBuilder()
                 .setID(id)
+                .setAmenity(amenity)
                 .build();
         try {
             response = client.getObjID(request);

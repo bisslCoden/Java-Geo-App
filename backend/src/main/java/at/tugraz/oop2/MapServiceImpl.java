@@ -21,12 +21,21 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
                   io.grpc.stub.StreamObserver<MapObjectRPC> responseObserver){
         long id = request.getID();
         logger.info("recieved getObjID request for ID: " + id);
+        System.out.println("going into search....");
         //Here we need to connect to the database and fetch the id and stuff...
         MapObjectRPC response;
+        MapObject result;
         if (request.getAmenity())
-            response =  gRPCBackend.buildResponse((MapObject) Map.getInstance().getAmenity(id), true);
+        {
+            System.out.println("requesting Ameni");
+            result = Map.getInstance().getAmenity(id);
+        }
         else
-            response = gRPCBackend.buildResponse((MapObject) Map.getInstance().getRoad(id), false);
+        {
+            System.out.println("requesting Road");
+            result = Map.getInstance().getRoad(id);
+        }
+        response = gRPCBackend.buildResponse(result, request.getAmenity());
         if (response == null)
         {
             Status err = Status.INTERNAL.withDescription("404");

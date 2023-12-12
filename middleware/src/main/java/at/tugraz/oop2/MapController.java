@@ -70,7 +70,7 @@ public class MapController {
     Amenity getAmenityID(@PathVariable long id)
     {
         //Errorhandling: if anything goes wrong in the backend requested_amend will just be null
-        Amenity requested_amend = (Amenity) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id));
+        Amenity requested_amend = (Amenity) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id, true));
         return requested_amend;
     }
     @GetMapping("/roads")
@@ -92,7 +92,7 @@ public class MapController {
     @GetMapping("/roads/{id}")
     Road getObjectRoadID(@PathVariable long id) {
         //Errorhandling: same here - if anything goes wrong in the backend requested_road will just be null
-        Road requested_road = (Road) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id));
+        Road requested_road = (Road) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id, false));
         return requested_road;
     }
 

@@ -9,8 +9,11 @@ import java.util.List;
 
 public class Map {
     // singleton structure
-    private static Map _instance = new Map();
-    static Map getInstance() { return _instance; };
+    private static Map _instance = null;
+    static Map getInstance() {
+        if (_instance == null)
+            _instance = new Map();
+        return _instance; };
 
     // constructor
     private Map() {}
