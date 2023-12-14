@@ -161,7 +161,7 @@ Nature:
 * water `rbg(0,128,255)` (any entity with key `water`)
 
 *Parameters:* 
-* `filter` (default: `motorway`): comma-separated list of layers to display, these should be drawn in the order specified (the last one is drawn last)
+* `layers` (default: `motorway`): comma-separated list of layers to display, these should be drawn in the order specified (the last one is drawn last)
 
 *Return format*:
 A `PNG`, indicated by the `Content-Type`-Header.
@@ -173,7 +173,7 @@ This request will request a route from the with ID `from` to the node with ID `t
 *Parameters:*
 * `from`: start node ID
 * `to`: end node ID
-* `weigthing`: either `time` or `length`, see below for more information (default: `length`)
+* `weighting`: either `time` or `length`, see below for more information (default: `length`)
 
 *Return format*:
 
