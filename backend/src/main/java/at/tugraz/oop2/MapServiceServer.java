@@ -1,11 +1,17 @@
 package at.tugraz.oop2;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.io.geojson.GeoJsonWriter;
 
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class MapServiceServer {
@@ -27,6 +33,7 @@ public class MapServiceServer {
             System.out.println(e);
             port = 8020;
         }
+
 
         MapLogger.backendStartup(port, data_path);
         final MapServiceServer server = new MapServiceServer();

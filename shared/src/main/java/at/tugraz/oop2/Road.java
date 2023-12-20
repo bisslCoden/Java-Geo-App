@@ -1,6 +1,7 @@
 package at.tugraz.oop2;
 
 import lombok.Data;
+import org.locationtech.jts.geom.Geometry;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -15,6 +16,16 @@ public class Road extends MapObject {
         this.id = id;
         this.tags = tags;
         this.type = type;
+        this.child_ids = child_ids;
+    }
+
+    public Road(long id, String name, Map<String, String> tags, String type, Geometry geom, ArrayList<Long> child_ids)
+    {
+        this.id = id;
+        this.name = name;
+        this.tags = tags;
+        this.type = type;
+        this.geom = geom;
         this.child_ids = child_ids;
     }
 

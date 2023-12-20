@@ -1,15 +1,19 @@
 package at.tugraz.oop2;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import mapserviceGRPC.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.w3c.dom.css.Rect;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -18,13 +22,13 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
 
     @Override
     public void getObjID(mapserviceGRPC.req_ID request,
-                  io.grpc.stub.StreamObserver<MapObjectRPC> responseObserver){
+                  io.grpc.stub.StreamObserver<resJSON> responseObserver){
         long id = request.getID();
         logger.info("recieved getObjID request for ID: " + id);
         System.out.println("going into search....");
         //Here we need to connect to the database and fetch the id and stuff...
-        MapObjectRPC response;
         MapObject result;
+        resJSON response;
         if (request.getAmenity())
         {
             System.out.println("requesting Ameni");
@@ -35,27 +39,41 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             System.out.println("requesting Road");
             result = Map.getInstance().getRoad(id);
         }
-        response = gRPCBackend.buildResponse(result, request.getAmenity());
+
+        GeometryFactory fac = new GeometryFactory();
+        result.setGeom(fac.createLineString(new Coordinate[]{new Coordinate(12.54, 2.4), new Coordinate(22.5, 43.1)}));
+        response = gRPCBackend.buildResponseID(result);
         if (response == null)
         {
             Status err = Status.INTERNAL.withDescription("404");
             responseObserver.onError(err.asRuntimeException());
         }
         else
+        {
+            System.out.println("sending a sucefful reply");
             responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
     }
 
     @Override
-    public void getObjBbox(req_Obj_bbox request, StreamObserver<res_ObjArea> responseObserver) {
+    public void getObjBbox(req_Obj_bbox request, StreamObserver<resJSON> responseObserver) {
         Rectangle2D.Double BBox = new Rectangle2D.Double(request.getBboxTl().getX(), request.getBboxTl().getY(),
                 (request.getBboxBr().getX()-request.getBboxTl().getX()),
                 (request.getBboxBr().getY() - request.getBboxTl().getY()));
         MapObject[] result;
-        res_ObjArea.Builder response = res_ObjArea.newBuilder();
-        if (request.getAmenity())
+        if (request.getAmenity()) {
             result = Map.getInstance().getAmenities(BBox, request.getType(), (int) request.getSkip(), (int) request.getTake());
-        else
+        }
+        else {
             result = Map.getInstance().getRoads(BBox, request.getType(), (int) request.getSkip(), (int) request.getTake());
+        }
+        HashMap<String, Long> paging = new HashMap<>();
+        paging.put("skip",request.getSkip());
+        paging.put("take",request.getTake());
+        paging.put("total", (long) result.length);
+
+
         if (result == null)
         {
             Status err = Status.INTERNAL.withDescription("404");
@@ -63,35 +81,34 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         }
         else
         {
-            for (var obj : result)
-                response.addObjects(gRPCBackend.buildResponse(obj, request.getAmenity()));
-
-            response.setTotal(result.length);
-            responseObserver.onNext(response.build());
+            resJSON response = gRPCBackend.buildResponseArea(result, paging);
+            responseObserver.onNext(response);
         }
     }
 
     @Override
-    public void getAmenityPoint(req_amenity_point request, StreamObserver<res_ObjArea> responseObserver) {
+    public void getAmenityPoint(req_amenity_point request, StreamObserver<resJSON> responseObserver) {
         System.out.println("in amend req");
         Point2D.Double point = new Point2D.Double(request.getPoint().getX(), request.getPoint().getY());
         double range = request.getDist();
         MapServiceServer.logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
         MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), (int) request.getSkip(),
                 (int)request.getTake());
-        res_ObjArea.Builder response = res_ObjArea.newBuilder();
+
+        HashMap<String, Long> paging = new HashMap<>();
+        paging.put("skip",request.getSkip());
+        paging.put("take",request.getTake());
+        paging.put("total", (long) result.length);
+
         if (result == null)
         {
-            MapServiceServer.logger.info("\tERROR: could not find specified Point. Sending back Error...");
             Status err = Status.INTERNAL.withDescription("404");
             responseObserver.onError(err.asRuntimeException());
         }
         else
         {
-            for (var obj : result)
-                response.addObjects(gRPCBackend.buildResponse(obj, true));
-            response.setTotal(result.length);
-            responseObserver.onNext(response.build());
+            resJSON response = gRPCBackend.buildResponseArea(result, paging);
+            responseObserver.onNext(response);
         }
 
     }

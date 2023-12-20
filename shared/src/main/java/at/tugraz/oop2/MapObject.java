@@ -1,9 +1,14 @@
 package at.tugraz.oop2;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.Pair;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.io.geojson.GeoJsonWriter;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -14,32 +19,13 @@ import java.util.Map;
 public class MapObject {
     String name;
     long id;
-    Geometry geom = new Geometry();
+    @JsonSerialize (using = GeoSerializer.class)
+    Geometry geom;// = new GeometryFactory().createEmpty(2);
     Map<String, String> tags = new HashMap<>();
     String type;
-    public MapObject(){}
-    public void setGeo(String type, ArrayList<double[]> coords, String Crstype, Map<String, String> Crsprop)
-    {
-        this.geom.type = type;
-        this.geom.coordinates = coords;
-        this.geom.crs.type = Crstype;
-        this.geom.crs.properties = Crsprop;
-    }
-    @Data
-    public class Geometry {
-        String type;
-        ArrayList<double[]> coordinates = new ArrayList<>();
-        Crs crs = new Crs();
-        public Geometry(){}
-        @Data
-        public class Crs {
-            String type;
-            Map<String, String> properties = new HashMap<>();
-            public Crs(){}
-        }
-    }
 
-
+    public MapObject() {
+    }
 }
 
 

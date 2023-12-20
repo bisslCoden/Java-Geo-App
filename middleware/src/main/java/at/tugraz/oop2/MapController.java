@@ -1,9 +1,14 @@
 package at.tugraz.oop2;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import lombok.Data;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +38,7 @@ public class MapController {
         sample_err(){}
     }
     @GetMapping("/amenities")
-    Listresponse getObjectList(@RequestParam Map<String, String> params){
+    String getObjectList(@RequestParam Map<String, String> params){
         //errorhandling implement:
         //check if there is either point + d or bbox points
         //please then set this var to which type we need to process
@@ -43,46 +48,44 @@ public class MapController {
         pp.dist = 1.20;
         //Errorhandling: set pp :D
 
-        Listresponse requested_List = null;
+        String requested_List = null;
         if(pp.isBbox()) {
             try {
-                requested_List = Utils.transformListResponse(gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
-                                true, pp.getTake(), pp.getSkip()), pp.getSkip(), pp.getTake());
+                requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
+                                true, pp.getTake(), pp.getSkip());
             } catch (Exception e){
                 System.out.println(e);
             }
         }
         else {
             try{
-                requested_List = Utils.transformListResponse(gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
-                        pp.getTake(), pp.getSkip()), pp.getSkip(), pp.getTake());
+                requested_List = gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
+                        pp.getTake(), pp.getSkip());
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 Listresponse err = new Listresponse();
-                err.setErrno(e.getMessage().equals("INTERNAL: 404") ? "404" : "500");
-                err.setMsg("not implemented but err");
-                return err;
+                return "idk";
             }
         }
         return requested_List;
     }
     @GetMapping("/amenities/{id}")
-    Amenity getAmenityID(@PathVariable long id)
+    String getAmenityID(@PathVariable long id)
     {
         //Errorhandling: if anything goes wrong in the backend requested_amend will just be null
-        Amenity requested_amend = (Amenity) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id, true));
+        String requested_amend = gRPCMiddleware.requestObjID(id, true);
         return requested_amend;
     }
     @GetMapping("/roads")
-    Listresponse getObjectRoad(@RequestParam Map<String, String> params) {
+    String getObjectRoad(@RequestParam Map<String, String> params) {
         //have to be set if used
         parsed_params pp = new parsed_params();
         //also here errorhandling sets pp
 
-        Listresponse requested_List = null;
+        String requested_List = null;
             try {
-                requested_List = Utils.transformListResponse(gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
-                        false, pp.getTake(), pp.getSkip()), pp.getSkip(), pp.getTake());
+                requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
+                        false, pp.getTake(), pp.getSkip());
             } catch (Exception e){
                 System.out.println(e);
             }
@@ -90,9 +93,9 @@ public class MapController {
     }
 
     @GetMapping("/roads/{id}")
-    Road getObjectRoadID(@PathVariable long id) {
+    String getObjectRoadID(@PathVariable long id) {
         //Errorhandling: same here - if anything goes wrong in the backend requested_road will just be null
-        Road requested_road = (Road) Utils.getObjFromResponse(gRPCMiddleware.requestObjID(id, false));
+        String requested_road = gRPCMiddleware.requestObjID(id, false);
         return requested_road;
     }
 

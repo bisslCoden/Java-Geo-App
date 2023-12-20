@@ -26,8 +26,8 @@ public class MapData {
 
         for(Amenity amenity : _amenities) {
             // filter
-            if(amenity.type != type) continue;
-            if(!isInside(bbox, amenity.geom)) continue;
+            /*if(amenity.type != type) continue;
+            if(!isInside(bbox, amenity.geom)) continue;*/
 
             result.add(amenity);
         }
@@ -46,7 +46,7 @@ public class MapData {
         for(Road road : _roads) {
             // filter
             if(road.type != type) continue;
-            if(!isInside(bbox, road.geom)) continue;
+            //if(!isInside(bbox, road.geom)) continue;
 
             result.add(road);
         }
@@ -54,9 +54,10 @@ public class MapData {
         return result.toArray(new Road[0]);
     }
 
+    /*
     private boolean isInside(Rectangle2D.Double bbox, MapObject.Geometry geom) {
         return true; // TODO: implement
-    }
+    }*/
 
     // member
     private List<Road> _roads = new ArrayList<Road>();

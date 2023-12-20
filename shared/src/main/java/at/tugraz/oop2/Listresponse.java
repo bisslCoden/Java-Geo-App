@@ -3,13 +3,12 @@ package at.tugraz.oop2;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 @Data
 public class Listresponse {
-    String errno;
-    String msg;
-    ArrayList<MapObject> entries;
-    Map<String, Long> paging;
+    ArrayList<MapObject> entries = new ArrayList<>();
+    Map<String, Long> paging = new HashMap<>();
     Listresponse(){}
 }

@@ -5,26 +5,28 @@ import mapserviceGRPC.*;
 import java.util.List;
 
 public class gRPCMiddleware {
-    static MapObjectRPC requestObjID(long id, boolean amenity)
+    static String requestObjID(long id, boolean amenity)
     {
-        MapObjectRPC response;
+        String response;
         var client = MapApplication.getStub();
         mapserviceGRPC.req_ID request = req_ID.newBuilder()
                 .setID(id)
                 .setAmenity(amenity)
                 .build();
         try {
-            response = client.getObjID(request);
+            System.out.println("sending?");
+            response = client.getObjID(request).getJSON();
         }catch (Exception e){
             System.out.println("ECEEEPT" + e.getMessage());
             return null;
         }
+        System.out.println("got my response");
         return response;
     }
-    static mapserviceGRPC.res_ObjArea requestObjBbox(String type, double[] bbox_tl, double[] bbox_br, boolean amenity,
+    static String requestObjBbox(String type, double[] bbox_tl, double[] bbox_br, boolean amenity,
                                               Long take, Long skip)
     {
-        mapserviceGRPC.res_ObjArea response = null;
+        String response = null;
         var client = MapApplication.getStub();
         mapserviceGRPC.req_Obj_bbox request = req_Obj_bbox.newBuilder()
                 .setBboxTl(Coordinate.newBuilder().setX(bbox_tl[0]).setY(bbox_tl[1]))
@@ -35,17 +37,17 @@ public class gRPCMiddleware {
                 .setTake(take)
                 .build();
         try {
-            response = client.getObjBbox(request);
+            response = client.getObjBbox(request).getJSON();
         }catch (Exception e){
             System.out.println("ECEEEPT" + e.getMessage());
             return null;
         }
         return  response;
     }
-    static mapserviceGRPC.res_ObjArea requestAmenPoint(String type, double[] point, double dist,
+    static String requestAmenPoint(String type, double[] point, double dist,
                                                 Long take, Long skip)
     {
-        mapserviceGRPC.res_ObjArea response = null;
+        String response = null;
         var client = MapApplication.getStub();
         mapserviceGRPC.req_amenity_point request = req_amenity_point.newBuilder()
                 .setPoint (Coordinate.newBuilder().setX(point[0]).setY(point[1]))
@@ -55,7 +57,7 @@ public class gRPCMiddleware {
                 .setTake(take)
                 .build();
         try {
-            response = client.getAmenityPoint(request);
+            response = client.getAmenityPoint(request).getJSON();
         }catch (Exception e) {
             throw e;
         }
