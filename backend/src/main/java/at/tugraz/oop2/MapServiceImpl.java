@@ -63,10 +63,10 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
                 (request.getBboxBr().getY() - request.getBboxTl().getY()));
         MapObject[] result;
         if (request.getAmenity()) {
-            result = Map.getInstance().getAmenities(BBox, request.getType(), (int) request.getSkip(), (int) request.getTake());
+            result = Map.getInstance().getAmenities(BBox, request.getType(), request.getSkip(), request.getTake());
         }
         else {
-            result = Map.getInstance().getRoads(BBox, request.getType(), (int) request.getSkip(), (int) request.getTake());
+            result = Map.getInstance().getRoads(BBox, request.getType(),  request.getSkip(),  request.getTake());
         }
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());
@@ -92,8 +92,8 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         Point2D.Double point = new Point2D.Double(request.getPoint().getX(), request.getPoint().getY());
         double range = request.getDist();
         MapServiceServer.logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
-        MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), (int) request.getSkip(),
-                (int)request.getTake());
+        MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), request.getSkip(),
+                request.getTake());
 
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());
@@ -120,8 +120,8 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         PNG_image response = null;
         for(var s : request.getFiltersList())
             filters.add(s);
-        ByteString g = Map.getInstance().getTile(request.getTile().getX(), request.getTile().getY(), request.getZoom(),
-                filters);
+        ByteString g = Map.getInstance().getTile((int)request.getTile().getX(), (int) request.getTile().getY(),
+                (int)request.getZoom(), filters);
         response = PNG_image.newBuilder().setImageData(g).build();
         responseObserver.onNext(response);
     }
