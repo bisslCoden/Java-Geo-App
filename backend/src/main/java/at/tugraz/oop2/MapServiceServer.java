@@ -30,30 +30,37 @@ public class MapServiceServer {
                 throw  new Exception("port not right!");
         }catch (Exception e)
         {
-            System.out.println(e);
+            logger.info("There was a Problem with port parsing. Reverting to default...");
             port = 8020;
         }
 
+        //Getting the backend server Rolling :D
+        try {
+            MapLogger.backendStartup(port, data_path);
+            final MapServiceServer server = new MapServiceServer();
+            Map.getInstance().load("data/styria_reduced.osm");
+            server.start(port);
+        }
+        catch (Exception e){
+            logger.info("FATAL: Something went wrong in booting up the Server or loading the Dataset! "
+                    + e.getMessage());
+        }
 
-        MapLogger.backendStartup(port, data_path);
-        final MapServiceServer server = new MapServiceServer();
-        Map.getInstance().load("data/styria_reduced.osm");
-        server.start(port);
 
-        logger.info("ended here");
         logger.info("Stoping backend...");
     }
 
+    //------------------------------------------------------------------------------------------------------------------
+    // Setting up the gRPC channel
+    // @param port the gRPC NETWORK port to connect to the Middleware
+    //------------------------------------------------------------------------------------------------------------------
     private void start(int port) throws InterruptedException, IOException{
         server = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
                 .addService(new MapServiceImpl())
                 .build()
                 .start();
-        logger.info("server started");
+        logger.info("Server started successfully!");
         server.awaitTermination();
     }
 }
 
-
-
-//}

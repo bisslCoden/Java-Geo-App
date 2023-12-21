@@ -38,7 +38,10 @@ public class MapData {
     // methods
     public Amenity getAmenity(Long id) {
         for(Amenity amenity : _amenities)
+        {
+            System.out.println(amenity.id);
             if(amenity.id == id) return amenity;
+        }
         return null;
     }
     public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take) {
