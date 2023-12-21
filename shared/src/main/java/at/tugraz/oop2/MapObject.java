@@ -26,6 +26,13 @@ public class MapObject {
 
     public MapObject() {
     }
+    public MapObject(long id, String name, String type, Map<String, String> tags, Geometry geom) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.tags = tags;
+        this.geom = geom;
+    }
 }
 
 
