@@ -129,6 +129,6 @@ message res_err {
 }
 
 message PNG_image{
-  bytes image_data = 1;
+  bytes data= 1;
 }
 

@@ -135,6 +135,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         paging.put("take",request.getTake());
         paging.put("total", (long) result.length);
 
+        System.out.println("The length of output: " + result.length);
         //Nothing was found in this case
         if (result.length == 0)
         {

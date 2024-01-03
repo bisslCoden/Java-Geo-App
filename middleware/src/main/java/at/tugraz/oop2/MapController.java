@@ -48,11 +48,14 @@ public class MapController {
     {
         //SAMPLE CODE EXAMPLE REQUEST
         parsed_params pp = new parsed_params();
-        pp.bbox = false;
-        pp.point = new double[]{15.00, 47.134};
-        pp.dist = 6.00;
+        pp.bbox = true;
+        pp.bbox_tl = new double[]{15.45534, 47.05938};
+        pp.dist = 100;
+        pp.skip = (long)0;
+        pp.take = (long)2;
+        pp.type = "restaurant";
         //SAMPLE END
-
+        System.out.println(pp.isBbox()?"Bbox" : "noot");
         String requested_List = null;
         if(pp.isBbox()) {
             try {
@@ -135,7 +138,7 @@ public class MapController {
     }
 
     @GetMapping("/tile/{z}/{x}/{y}.png")
-    ByteString getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y, @RequestParam List<String> filters)
+    byte[] getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y, @RequestParam List<String> filters)
     {
         mapserviceGRPC.PNG_image response = null;
         try {
@@ -144,6 +147,6 @@ public class MapController {
             System.out.println("Exception caught: " + e.getMessage());
             return null;
         }
-        return response.getImageData();
+        return response.getImageData().toByteArray();
     }
 }
