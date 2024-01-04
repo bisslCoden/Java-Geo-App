@@ -157,6 +157,6 @@ public class MapController {
             System.out.println("Exception caught: " + e.getMessage());
             return null;
         }
-        return response.getImageData().toByteArray();
+        return response.getData().toByteArray();
     }
 }
