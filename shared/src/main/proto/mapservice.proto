@@ -12,8 +12,8 @@ service mapservice{
   rpc getObjID (req_ID) returns (resJSON) {}
   rpc getObjBbox (req_Obj_bbox) returns(resJSON) {}
   rpc getAmenityPoint (req_amenity_point) returns (resJSON) {}
-  rpc getUsage (req_use) returns (res_use) {}
-  //rpc calcRoute (req_route) returns (res_route) {}
+  rpc getUsage (req_use) returns (resJSON) {}
+  rpc calcRoute (req_route) returns (resJSON) {}
   rpc getImage (req_image) returns (PNG_image) {}
 }
 
@@ -38,11 +38,6 @@ message CRS{
 //  //CRS crs = 3;
 //}
 
-message Usage{
-  string type = 1;
-  double share = 2;
-  double area = 3;
-}
 
 //------------------------------------------------------------------------------------
 // Beginning of requests
@@ -76,7 +71,7 @@ message req_amenity_point{
 message req_route {
   uint64 start_ID = 1;
   uint64 end_ID = 2;
-  bool time = 3;
+  bool length = 3;
 }
 
 message req_use{
@@ -113,16 +108,7 @@ message resJSON{
   string JSON = 1;
 }
 
-//message res_route{
-//  double len = 1;
-//  double time = 2;
-//  repeated MapObjectRPC roads = 3;
-//}
 
-message  res_use{
-  double area = 1;
-  repeated Usage users = 2;
-}
 
 message res_err {
   string error_msg = 1;

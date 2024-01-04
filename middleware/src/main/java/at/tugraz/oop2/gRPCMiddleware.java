@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 public class gRPCMiddleware {
 
@@ -115,7 +116,8 @@ public class gRPCMiddleware {
     // @param take paging info how many instances are requested
     // @param skip paging ingo how many instances are to be skipped
     //------------------------------------------------------------------------------------------------------------------
-    static PNG_image request_Image(int x, int y, int z, List<String> filters){
+    static PNG_image request_Image(int x, int y, int z, List<String> filters)
+    {
         PNG_image resp_PNG = null;
         var client = MapApplication.getStub();
         req_image.Builder request = req_image.newBuilder().setX(x).setY(y).setZ(z);
@@ -126,11 +128,49 @@ public class gRPCMiddleware {
         }
         catch (Exception e)
         {
-            throw e;
+            if(e.getMessage().contains("404"))
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+            else
+                throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
         return resp_PNG;
+    }
+    static String requestRoute(Long start, Long end, boolean length)
+    {
+        resJSON response;
+        var client = MapApplication.getStub();
+        req_route.Builder request = req_route.newBuilder().setStartID(start).setEndID(end).setLength(length);
+        try {
+            response = client.calcRoute(request.build());
+        }catch (Exception e)
+        {
+            if(e.getMessage().contains("404"))
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+            else
+                throw e;
+        }
+        return response.getJSON();
+    }
+
+    static String requestUsage(double[] bbox_tl, double[] bbox_br)
+    {
+        resJSON response;
+        req_use.Builder req = req_use.newBuilder()
+                .setBboxTl(Coordinate.newBuilder().setX(bbox_tl[0]).setY(bbox_tl[1]).build())
+                .setBboxBr(Coordinate.newBuilder().setX(bbox_br[0]).setY(bbox_br[1]).build());
+        var client = MapApplication.getStub();
+        try {
+            response = client.getUsage(req.build());
+        }catch (Exception e)
+        {
+            if(e.getMessage().contains("404"))
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+            else
+                throw e;
+        }
+        return response.getJSON();
     }
 
 }

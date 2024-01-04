@@ -19,12 +19,6 @@ import java.util.Map;
 public class MapController {
 
 
-    @Data
-    public class sample_err{
-        int type = 404;
-        String msg = "Not implemented but this is an error!";
-        sample_err(){}
-    }
 
     //------------------------------------------------------------------------------------------------------------------
     // GET Mapping for BBox/Point Requests for Amenities
@@ -148,15 +142,58 @@ public class MapController {
     }
 
     @GetMapping("/tile/{z}/{x}/{y}.png")
-    byte[] getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y, @RequestParam List<String> filters)
+    byte[] getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y,
+                  @RequestParam (name = "filter", defaultValue = "motorway") List<String> filters)
     {
+        //DEBUG
+        System.out.println(String.format("request for tile z: %d x: %d y: %d", z, x, y));
+        for(var f : filters)
+            System.out.println(f);
         mapserviceGRPC.PNG_image response = null;
         try {
             response = gRPCMiddleware.request_Image(x, y, z, filters);
         }catch (Exception e){
-            System.out.println("Exception caught: " + e.getMessage());
-            return null;
+            throw e;
         }
-        return response.getImageData().toByteArray();
+        return response.getData().toByteArray();
+    }
+
+    @GetMapping("/route")
+    String getRoute(
+            @RequestParam (name = "from") Long startID,
+            @RequestParam (name = "to") Long endID,
+            @RequestParam (name = "weighting", defaultValue = "length") String weight)
+    {
+        String responseBody = null;
+        try {
+            Long start = Parser.parseID(startID);
+            Long end = Parser.parseID(endID);
+            boolean length = Parser.parseWeight(weight);
+            responseBody = gRPCMiddleware.requestRoute(start, end, length);
+        }catch (Exception e)
+        {
+            throw e;
+        }
+        return  responseBody;
+    }
+
+    @GetMapping("/usage")
+    String getUse(
+            @RequestParam(name = "bbox.tl.x") Double bboxTLX,
+            @RequestParam(name = "bbox.tl.y") Double bboxTLY,
+            @RequestParam(name = "bbox.br.x") Double bboxBRX,
+            @RequestParam(name = "bbox.br.y") Double bboxBRY
+    )
+    {
+        String response;
+        try {
+            Parser.checkBBox(bboxTLX, bboxTLY, bboxBRX, bboxBRY);
+            response = gRPCMiddleware.requestUsage(new double[]{bboxTLX, bboxTLY},
+                    new double[] {bboxBRX, bboxBRY});
+        }catch (Exception e)
+        {
+            throw e;
+        }
+        return response;
     }
 }

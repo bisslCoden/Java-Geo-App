@@ -57,4 +57,14 @@ public class gRPCBackend {
         resJSON response = resJSON.newBuilder().setJSON(jsonString).build();
         return response;
     }
+
+    static resJSON buildResponseUsage()
+    {
+        return null;
+    }
+
+    static resJSON builResponseRoute()
+    {
+        return null;
+    }
 }

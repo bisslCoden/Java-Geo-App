@@ -14,7 +14,7 @@ public class Parser {
     public static final Long DEFAULT_SKIP = 0L;
     public static final String DEFAULT_TYPE = "A";
     public static final int REQ_MAX_PARAMS = 7;
-    public static final Long MAX_PARAM = 700000000L;
+    public static final Long MAX_PARAM = 70000000L;
     public static final int REQ_MIN_PARAMS = 3;
     public static final String[] allowedParams = {"bbox.tl.x", "bbox.tl.y", "bbox.br.x",
             "bbox.br.y", "point.x", "point.y", "point.d", "take", "skip", "amenity", "road"};
@@ -29,6 +29,15 @@ public class Parser {
             throw e;
         }
         return id;
+    }
+
+    public static boolean parseWeight(String input)
+    {
+        if (input.equals("length"))
+            return true;
+        else if (input.equals("time"))
+            return false;
+        else throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
     }
 
     public static parsed_params checkBoundsPoint(Double pointX, Double pointY,Long Dist, Long skip, Long take, String type)
@@ -51,21 +60,31 @@ public class Parser {
                                                 Long skip, Long take, String type)
     {
         try {
-            checkX(BBox_TLX);
-            checkY(BBox_TLY);
-            checkX(BBox_BRX);
-            checkY(BBox_BRY);
+            checkBBox(BBox_TLX,  BBox_TLY, BBox_BRX, BBox_BRY);
             checkV(skip);
             checkV(take);
-            if (BBox_BRX < BBox_TLX)
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
-            else if(BBox_TLY < BBox_BRY)
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
         }catch (Exception e)
         {
             throw e;
         }
         return new parsed_params(new double[] {BBox_TLX, BBox_TLY}, new double[] {BBox_BRX, BBox_BRY}, skip, take, type);
+    }
+
+    public static void checkBBox(Double BBox_TLX, Double BBox_TLY, Double BBox_BRX, Double BBox_BRY)
+    {
+        try
+        {
+            checkX(BBox_TLX);
+            checkY(BBox_TLY);
+            checkX(BBox_BRX);
+            checkY(BBox_BRY);
+        }catch (Exception e){
+            throw e;
+        }
+        if (BBox_BRX < BBox_TLX)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+        else if(BBox_TLY < BBox_BRY)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
     }
 
     private static void checkX(Double x)

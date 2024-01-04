@@ -167,8 +167,24 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         PNG_image response = null;
         filters.addAll(request.getFiltersList());
         ByteString g = Map.getInstance().getTile(request.getX(), request.getY(), request.getZ(), filters);
-        response = PNG_image.newBuilder().setImageData(g).build();
+        response = PNG_image.newBuilder().setData(g).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+    }
+    @Override
+    public void getUsage(req_use request, StreamObserver<resJSON> responseObserver)
+    {
+        //DEBUG
+        logger.info(String.format("\tGot usage request for BboxTL: (%f|%f), BBoxBR (%f|%f)",
+                request.getBboxTl().getX(), request.getBboxTl().getY(), request.getBboxBr().getX(),
+                request.getBboxBr().getY()));
+        resJSON response;
+
+    }
+
+    @Override
+    public void calcRoute (req_route request, StreamObserver<resJSON> responseObserver)
+    {
+
     }
 }
