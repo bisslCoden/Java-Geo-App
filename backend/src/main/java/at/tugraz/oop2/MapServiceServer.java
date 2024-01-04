@@ -10,6 +10,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 
 
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -39,13 +41,13 @@ public class MapServiceServer {
             MapLogger.backendStartup(port, data_path);
             final MapServiceServer server = new MapServiceServer();
             Map.getInstance().load("data/styria_reduced.osm");
+
             server.start(port);
         }
         catch (Exception e){
             logger.info("FATAL: Something went wrong in booting up the Server or loading the Dataset! "
                     + e.getMessage());
         }
-
 
         logger.info("Stoping backend...");
     }

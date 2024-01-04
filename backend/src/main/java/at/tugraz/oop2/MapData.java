@@ -1,5 +1,16 @@
 package at.tugraz.oop2;
 
+import org.apache.commons.lang3.ObjectUtils;
+import org.geotools.graph.build.GraphBuilder;
+import org.geotools.graph.build.GraphGenerator;
+import org.geotools.graph.build.basic.BasicGraphBuilder;
+import org.geotools.graph.build.basic.BasicGraphGenerator;
+import org.geotools.graph.build.line.BasicLineGraphGenerator;
+import org.geotools.graph.build.line.LineGraphGenerator;
+import org.geotools.graph.structure.Graph;
+import org.geotools.graph.structure.Node;
+import org.geotools.graph.structure.line.XYNode;
+import org.hsqldb.lib.HsqlArrayHeap;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.referencing.operation.MathTransform;
@@ -11,19 +22,22 @@ import org.locationtech.jts.geom.Geometry;
 
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
+import org.springframework.aop.target.HotSwappableTargetSource;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.Map;
 
 public class MapData {
     public MapData() {}
-    public MapData(List<Road> roads, List<Amenity> amenities, List<MapObject> others) {
+    public MapData(List<Road> roads, List<Amenity> amenities, List<MapObject> others, Graph network) {
         this._roads = roads;
         this._amenities = amenities;
         this._others = others;
+        this._network = network;
 
         // setup transformation
         try {
@@ -51,7 +65,7 @@ public class MapData {
         for(Amenity amenity : _amenities) {
             // filter
             if(took >= take) break;
-            if(type != null && amenity.type != type) continue; // TODO: verify
+            if(!amenity.type.equals(type)) continue; // TODO: verify
             if(!isInside(frame, amenity.geom)) continue;
             if(skipped < skip) { ++skipped; continue; }
 
@@ -69,7 +83,7 @@ public class MapData {
         for(Amenity amenity : _amenities) {
             // filter
             if(took >= take) break;
-            if(type != null && amenity.type != type) continue; // TODO: verify
+            if(!amenity.type.equals(type)) continue; // TODO: verify
             if(!isInside(point, distance, amenity.geom)) continue;
             if(skipped < skip) { ++skipped; continue; }
 
@@ -93,7 +107,7 @@ public class MapData {
         for(Road road : _roads) {
             // filter
             if(took >= take) break;
-            if(type != null && road.type != type) continue; // TODO: verify
+            if(!road.type.equals(type)) continue; // TODO: verify
             if(!isInside(frame, road.geom)) continue;
             if(skipped < skip) { ++skipped; continue;}
 
@@ -105,12 +119,74 @@ public class MapData {
         return result.toArray(new Road[0]);
     }
 
+    public Route getRoute(Long from, Long to, String weighting) {
+        // TODO: implement
+        Road[] resp = new Road[1];
+        resp[0] = _roads.get(0);
+        return new Route(200.0, 200.0, resp);
+    }
+
+    public Usages getUsage(Rectangle2D.Double frame) {
+        // TODO: fix
+        // transform frame
+        Geometry frame_geom = new GeometryFactory().createPolygon(new Coordinate[] {
+                new Coordinate(frame.x, frame.y),
+                new Coordinate(frame.x + frame.width, frame.y),
+                new Coordinate(frame.x + frame.width, frame.y + frame.height),
+                new Coordinate(frame.x, frame.y + frame.height),
+                new Coordinate(frame.x, frame.y),
+        });
+        Geometry frame_trans = null;
+        try {
+            frame_trans = JTS.transform(frame_geom, _transform);
+        } catch (TransformException e) {
+            throw new RuntimeException(e);
+        }
+
+        // calculate areas
+        HashMap<String, Double> shares = new HashMap<>();
+        Double usage = frame_trans.getArea();
+
+        // search in map objects
+        for(MapObject other : _others) {
+            String key = other.tags.getOrDefault("landuse", null);
+            if(key == null) continue;
+            if(!isInside(frame, other.geom)) continue;
+            Double value = shares.getOrDefault(key, 0.0);
+
+            Geometry target = null;
+
+            try {
+                target = JTS.transform(other.geom, _transform);
+            } catch (TransformException e) {
+                throw new RuntimeException(e);
+            }
+
+
+            Double area = target.getArea();
+            value += area;
+            shares.put(key, value);
+        }
+
+        // convert shares to usage array
+        ArrayList<Usage> usages = new ArrayList<>();
+        for(HashMap.Entry<String, Double> entry : shares.entrySet()) {
+            String type = entry.getKey();
+            Double area = entry.getValue();
+            Double share = area / usage;
+            usages.add(new Usage(type, share, area));
+        }
+
+        return new Usages(usage, usages.toArray(new Usage[0]));
+    }
+
+
     public boolean isInside(Rectangle2D.Double frame, Geometry geom) { // TODO: refactor
         Geometry boundingBox = new GeometryFactory().createPolygon(new Coordinate[] {
                 new Coordinate(frame.x, frame.y),
                 new Coordinate(frame.x + frame.width, frame.y),
                 new Coordinate(frame.x + frame.width, frame.y + frame.height),
-                new Coordinate(frame.x, frame.y + frame.width),
+                new Coordinate(frame.x, frame.y + frame.height),
                 new Coordinate(frame.x, frame.y),
         });
 
@@ -133,6 +209,8 @@ public class MapData {
     public List<Road> _roads = new ArrayList<>();
     public List<Amenity> _amenities = new ArrayList<>();
     public List<MapObject> _others = new ArrayList<>();
+
+    private Graph _network = null;
 
     private MathTransform _transform = null;
 }
