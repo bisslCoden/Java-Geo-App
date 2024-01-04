@@ -58,7 +58,7 @@ public class MapData {
         }
         return null;
     }
-    public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take) {
+    public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long total) {
         List<Amenity> result = new ArrayList<Amenity>();
 
         int skipped = 0, took = 0;
@@ -76,7 +76,7 @@ public class MapData {
 
         return result.toArray(new Amenity[0]);
     }
-    public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take) {
+    public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long total) {
         List<Amenity> result = new ArrayList<>();
 
         int skipped = 0, took = 0;
@@ -100,7 +100,7 @@ public class MapData {
             if(road.id == id) return road;
         return null;
     }
-    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take) {
+    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long Total) {
         List<Road> result = new ArrayList<Road>();
 
         int skipped = 0, took = 0;

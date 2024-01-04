@@ -83,11 +83,11 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         //Calling Map function to get the Amenities in the specified box
         if (request.getAmenity())
         {
-            result = Map.getInstance().getAmenities(BBox, request.getType(), request.getSkip(), request.getTake());
+            result = Map.getInstance().getAmenities(BBox, request.getType(), request.getSkip(), request.getTake(), (long)0);
         }
         else
         {
-            result = Map.getInstance().getRoads(BBox, request.getType(),  request.getSkip(),  request.getTake());
+            result = Map.getInstance().getRoads(BBox, request.getType(),  request.getSkip(),  request.getTake(), (long)0);
         }
         //Creating the paging map for Listresponse
         HashMap<String, Long> paging = new HashMap<>();
@@ -128,7 +128,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         //DEBUG: See how the Point arrives in Backend
         logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
         MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), request.getSkip(),
-                request.getTake());
+                request.getTake(), (long)0);
 
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());

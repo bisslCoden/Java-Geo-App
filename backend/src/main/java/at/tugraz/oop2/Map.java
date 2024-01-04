@@ -24,17 +24,17 @@ public class Map {
     public Amenity getAmenity(Long id) {
         return _data.getAmenity(id);
     }
-    public Amenity[] getAmenities(Rectangle2D.Double bbox, String type, Long skip, Long take) {
-        return _data.getAmenities(bbox, type, skip, take);
+    public Amenity[] getAmenities(Rectangle2D.Double bbox, String type, Long skip, Long take, Long total) {
+        return _data.getAmenities(bbox, type, skip, take, total);
     }
-    public Amenity[] getAmenities(Point2D.Double point, Double distance,String type, Long skip, Long take) {
-        return _data.getAmenities(point, distance, type, skip, take);
+    public Amenity[] getAmenities(Point2D.Double point, Double distance,String type, Long skip, Long take, Long total) {
+        return _data.getAmenities(point, distance, type, skip, take, total);
     }
     public Road getRoad(Long id) {
         return _data.getRoad(id);
     }
-    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take) {
-        return _data.getRoads(frame, type, skip, take);
+    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long total) {
+        return _data.getRoads(frame, type, skip, take, total);
     }
     public ByteString getTile(Integer x, Integer y, Integer z, List<String> filter) {
         return MapRenderer.getTile(x, y, z, filter, _data);
