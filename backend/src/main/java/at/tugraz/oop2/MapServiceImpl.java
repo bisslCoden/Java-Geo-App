@@ -180,13 +180,36 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         logger.info(String.format("\tGot usage request for BboxTL: (%f|%f), BBoxBR (%f|%f)",
                 request.getBboxTl().getX(), request.getBboxTl().getY(), request.getBboxBr().getX(),
                 request.getBboxBr().getY()));
-        resJSON response;
-
+        resJSON response = null;
+        double width = request.getBboxBr().getX() - request.getBboxTl().getX();
+        double height = request.getBboxBr().getY() - request.getBboxTl().getY();
+        Rectangle2D.Double BBox = new Rectangle2D.Double(request.getBboxTl().getX(), request.getBboxTl().getY(),
+                width, height);
+        Usages result = Map.getInstance().getUsage(BBox);
+        try {
+            response = gRPCBackend.buildResponseUsage(result);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            responseObserver.onError(new RuntimeException("404"));
+        }
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void calcRoute (req_route request, StreamObserver<resJSON> responseObserver)
     {
-
+        logger.info(String.format("\tGot usage Route from node: %d to %d, Focus on %s",
+                request.getStartID(), request.getStartID(), request.getLength() ? "length" : "time"));
+        resJSON response = null;
+        Route result =  Map.getInstance().getRoute(request.getStartID(), request.getEndID(), request.getLength());
+        try {
+            response = gRPCBackend.builResponseRoute(result);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            responseObserver.onError(new RuntimeException("404"));
+        }
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

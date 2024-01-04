@@ -39,7 +39,7 @@ public class Map {
     public ByteString getTile(Integer x, Integer y, Integer z, List<String> filter) {
         return MapRenderer.getTile(x, y, z, filter, _data);
     }
-    public Route getRoute(Long from, Long to, String weighting) {
+    public Route getRoute(Long from, Long to, boolean weighting) {
         return _data.getRoute(from, to, weighting);
     }
     public Usages getUsage(Rectangle2D.Double frame) {

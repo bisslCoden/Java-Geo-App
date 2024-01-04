@@ -58,13 +58,31 @@ public class gRPCBackend {
         return response;
     }
 
-    static resJSON buildResponseUsage()
+    static resJSON buildResponseUsage(Usages result)
     {
-        return null;
+        ObjectMapper objMapp = new ObjectMapper();
+        String jsonString = null;
+        try {
+            jsonString = objMapp.writeValueAsString(result);
+        }catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+        resJSON response = resJSON.newBuilder().setJSON(jsonString).build();
+        return response;
     }
 
-    static resJSON builResponseRoute()
+    static resJSON builResponseRoute(Route result)
     {
-        return null;
+        ObjectMapper objMap = new ObjectMapper();
+        String json = null;
+        try {
+            json = objMap.writeValueAsString(result);
+        }catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+        resJSON respone = resJSON.newBuilder().setJSON(json).build();
+        return respone;
     }
 }

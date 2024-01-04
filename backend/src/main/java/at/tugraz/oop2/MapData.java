@@ -119,7 +119,7 @@ public class MapData {
         return result.toArray(new Road[0]);
     }
 
-    public Route getRoute(Long from, Long to, String weighting) {
+    public Route getRoute(Long from, Long to, boolean weighting) {
         // TODO: implement
         Road[] resp = new Road[1];
         resp[0] = _roads.get(0);
