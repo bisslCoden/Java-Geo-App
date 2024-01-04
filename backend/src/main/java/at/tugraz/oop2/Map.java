@@ -33,11 +33,17 @@ public class Map {
     public Road getRoad(Long id) {
         return _data.getRoad(id);
     }
-    public Road[] getRoads(Rectangle2D.Double bbox, String type, Long skip, Long take) {
-        return _data.getRoads(bbox, type, skip, take);
+    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take) {
+        return _data.getRoads(frame, type, skip, take);
     }
     public ByteString getTile(Integer x, Integer y, Integer z, List<String> filter) {
         return MapRenderer.getTile(x, y, z, filter, _data);
+    }
+    public Route getRoute(Long from, Long to, String weighting) {
+        return _data.getRoute(from, to, weighting);
+    }
+    public Usages getUsage(Rectangle2D.Double frame) {
+        return _data.getUsage(frame);
     }
 
     // members

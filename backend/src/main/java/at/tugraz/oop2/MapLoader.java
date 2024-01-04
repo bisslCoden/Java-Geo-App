@@ -1,5 +1,11 @@
 package at.tugraz.oop2;
 ;
+import org.geotools.graph.build.GraphBuilder;
+import org.geotools.graph.build.basic.BasicGraphBuilder;
+import org.geotools.graph.path.AStarShortestPathFinder;
+import org.geotools.graph.structure.Graph;
+//import org.geotools.graph.structure.Node;
+import org.geotools.graph.traverse.standard.AStarIterator;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -59,7 +65,10 @@ public class MapLoader {
 
         assemble(ways, nodes, relations, roads, amenities, others);
 
-        return new MapData(roads, amenities, others);
+        Graph network = null;
+        link(ways, nodes, network);
+
+        return new MapData(roads, amenities, others, network);
     }
 
     private static void parse(String location, List<Way> ways, List<Node> nodes, List<Relation> relations) {
@@ -244,27 +253,27 @@ public class MapLoader {
     private static Amenity constructAmenity(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         return new Amenity(
                 way.id,
-                way.tags.getOrDefault("name", "unknown"),
+                way.tags.getOrDefault("name", ""),
                 way.tags,
-                way.tags.getOrDefault("amenity", "invalid"),
+                way.tags.getOrDefault("amenity", ""),
                 constructGeometry(way, ways, nodes, relations)
         );
     }
     private static Amenity constructAmenity(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         return new Amenity(
                 node.id,
-                node.tags.getOrDefault("name", "unknown"),
+                node.tags.getOrDefault("name", ""),
                 node.tags,
-                node.tags.getOrDefault("amenity", "invalid"),
+                node.tags.getOrDefault("amenity", ""),
                 constructGeometry(node, ways, nodes, relations)
         );
     }
     private static Amenity constructAmenity(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         return new Amenity(
                 relation.id,
-                relation.tags.getOrDefault("name", "unknown"),
+                relation.tags.getOrDefault("name", ""),
                 relation.tags,
-                relation.tags.getOrDefault("amenity", "invalid"),
+                relation.tags.getOrDefault("amenity", ""),
                 constructGeometry(relation, ways, nodes, relations)
         );
     }
@@ -272,7 +281,10 @@ public class MapLoader {
         List<Coordinate> coordinates = getCoordinates(way, nodes);
         if(coordinates == null) return null;
 
-        if(coordinates.size() > 2 && coordinates.get(0) == coordinates.get(coordinates.size() - 1)) // create polygon
+        Long first = way.references.get(0);
+        Long last = way.references.get(way.references.size() - 1);
+        //if(coordinates.size() > 2 && coordinates.get(0) == coordinates.get(coordinates.size() - 1)) // create polygon
+        if(way.references.size() > 2 && first.equals(last))
             return new GeometryFactory().createPolygon(coordinates.toArray(new Coordinate[0]));
         else // create line string
             return new GeometryFactory().createLineString(coordinates.toArray(new Coordinate[0]));
@@ -421,9 +433,9 @@ public class MapLoader {
     private static Road constructRoad(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         Road result = new Road(
                 way.id,
-                way.tags.get("highway"),
+                way.tags.getOrDefault("name", ""),
                 way.tags,
-                "way",
+                way.tags.getOrDefault("highway", ""),
                 constructGeometry(way, ways, nodes, relations),
                 (ArrayList<Long>)way.references
         );
@@ -435,8 +447,8 @@ public class MapLoader {
     private static MapObject constructMapObject(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         MapObject result = new MapObject(
                 way.id,
-                way.tags.getOrDefault("name", "unknown"),
-                way.tags.getOrDefault("highway", "unknown"),
+                way.tags.getOrDefault("name", ""),
+                way.tags.getOrDefault("highway", ""),
                 way.tags,
                 constructGeometry(way, ways, nodes, relations)
         );
@@ -446,8 +458,8 @@ public class MapLoader {
     private static MapObject constructMapObject(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         MapObject result = new MapObject(
                 node.id,
-                node.tags.getOrDefault("name", "unknown"),
-                node.tags.getOrDefault("highway", "unknown"),
+                node.tags.getOrDefault("name", ""),
+                node.tags.getOrDefault("highway", ""),
                 node.tags,
                 constructGeometry(node, ways, nodes, relations)
         );
@@ -457,12 +469,54 @@ public class MapLoader {
     private static MapObject constructMapObject(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         MapObject result = new MapObject(
                 relation.id,
-                relation.tags.getOrDefault("name", "unknown"),
-                relation.tags.getOrDefault("highway", "unknown"),
+                relation.tags.getOrDefault("name", ""),
+                relation.tags.getOrDefault("highway", ""),
                 relation.tags,
                 constructGeometry(relation, ways, nodes, relations)
         );
 
         return result;
+    }
+
+    private static void link(List<Way> ways, List<Node> nodes, Graph network) {
+//        GraphBuilder builder = new BasicGraphBuilder();
+//        org.geotools.graph.structure.Node node =  builder.buildNode();
+//        node.setID((long) 034);
+//        node.set
+//        node.setNode();
+//
+//        // find shortest path
+//        Graph graph;
+//        Node start;
+//        Node destination;
+//
+//        // create a strategy for weighting edges in the graph
+//        // in this case we are using geometry length
+//
+//        AStarIterator.EdgeWeigter length_weighter = new AStarIterator.EdgeWeighter() {
+//            public double getWeight(Edge e) {
+//                SimpleFeature feature = (SimpleFeature) e.getObject();
+//                Geometry geometry = (Geometry) feature.getDefaultGeometry();
+//                return gometry.getLength();
+//            }
+//        };
+//        AStarIterator.EdgeWieghter time_weighter = new AStarIterator.EdgeWeighter() {
+//
+//        }
+//
+//
+//
+//        AStarShortestPathFinder pf = new AStarShortestPathFinder(graph, start, target, );
+//        pf.calculate();
+//
+//        //find some destinations to calculate paths to
+//
+//        //calculate the paths
+//        for ( Iterator d = destinations.iterator(); d.hasNext(); ) {
+//            Node destination = (Node) d.next();
+//            Path path = pf.getPath( destination );
+//
+//            //do something with the path
+//        }
     }
 }

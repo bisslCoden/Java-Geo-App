@@ -19,6 +19,12 @@ import java.util.Map;
 public class MapController {
 
 
+    @Data
+    public class sample_err{
+        int type = 404;
+        String msg = "Not implemented but this is an error!";
+        sample_err(){}
+    }
 
     //------------------------------------------------------------------------------------------------------------------
     // GET Mapping for BBox/Point Requests for Amenities
