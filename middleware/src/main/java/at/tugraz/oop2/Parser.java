@@ -33,13 +33,15 @@ public class Parser {
 
     public static parsed_params checkBoundsPoint(Double pointX, Double pointY,Long Dist, Long skip, Long take, String type)
     {
+        //DEBUG
         try {
             checkX(pointX);
             checkY(pointY);
             checkV(Dist);
             checkV(skip);
             checkV(take);
-        }catch (Exception e){
+        }catch (Exception e)
+        {
             throw e;
         }
         return new parsed_params(new double[]{pointX, pointY}, Dist, skip, take, type);
@@ -55,6 +57,10 @@ public class Parser {
             checkY(BBox_BRY);
             checkV(skip);
             checkV(take);
+            if (BBox_BRX < BBox_TLX)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            else if(BBox_TLY < BBox_BRY)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
         }catch (Exception e)
         {
             throw e;

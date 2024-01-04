@@ -6,7 +6,9 @@ import lombok.Data;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -31,77 +33,52 @@ public class MapController {
     //------------------------------------------------------------------------------------------------------------------
     @GetMapping("/amenities")
     String getAmenityPoint(
-            @RequestParam(name = "point.x") Double pointX,
-            @RequestParam(name = "point.y") Double pointY,
-            @RequestParam(name = "point.d") Long pointD,
+            @RequestParam(name = "bbox.tl.x", required = false) Double bboxTLX,
+            @RequestParam(name = "bbox.tl.y", required = false) Double bboxTLY,
+            @RequestParam(name = "bbox.br.x", required = false) Double bboxBRX,
+            @RequestParam(name = "bbox.br.y", required = false) Double bboxBRY,
+            @RequestParam(name = "point.x", required = false) Double pointX,
+            @RequestParam(name = "point.y", required = false) Double pointY,
+            @RequestParam(name = "point.d", required = false) Long pointD,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
             @RequestParam(name = "amenity", defaultValue = "A") String amenity)
     {
-        System.out.println("start?");
-        System.out.println(String.format("Point: %f %f; %d\nskip: %d, take: %d, amenity: %s", pointX, pointY, pointD,
-                skip, take, amenity));
+        System.out.println(String.format("Point: %f %f; %d\nBBox: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", pointX,
+                pointY, pointD, bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, amenity));
+        Boolean bbox = null;
+        if (bboxTLX != null && bboxTLY != null && bboxBRX != null && bboxBRY != null)
+        {
+            if (pointX != null && pointY != null && pointD != null)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            else bbox = true;
+        }
+        else if (pointX != null && pointY != null && pointD != null)
+            bbox = false;
+        else
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
 
-        /*
-        //SAMPLE CODE EXAMPLE REQUEST
-        Parser.parsed_params pp = new parsed_params();
-        pp.bbox = true;
-        pp.bbox_tl = new double[]{15.45534, 47.05938};
-        pp.dist = 100;
-        pp.skip = (long)0;
-        pp.take = (long)2;
-        pp.type = "restaurant";
-        //SAMPLE END
-        */
         Parser.parsed_params pp;
         String requested_List;
         try{
-            pp = Parser.checkBoundsPoint(pointX, pointY, pointD, skip, take, amenity);
-            requested_List = gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
-                    pp.getTake(), pp.getSkip());
+            if (bbox)
+            {
+                pp = Parser.checkBoundsBBox(bboxTLX, bboxTLY, bboxBRX, bboxBRY, skip, take, amenity);
+                requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
+                        true, pp.getTake(), pp.getSkip());
+            }
+            else
+            {
+                pp = Parser.checkBoundsPoint(pointX, pointY, pointD, skip, take, amenity);
+                requested_List = gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
+                        pp.getTake(), pp.getSkip());
+            }
         }catch (Exception e)
         {
             throw e;
         }
         return requested_List;
 
-    }
-    @GetMapping("/amenities")
-    String  getAmenityBBox(
-            @RequestParam(name = "bbox.tr.x") Double bboxTLX,
-            @RequestParam(name = "bbox.tr.y") Double bboxTLY,
-            @RequestParam(name = "bbox.bl.x") Double bboxBRX,
-            @RequestParam(name = "bbox.bl.y") Double bboxBRY,
-            @RequestParam(name = "skip", defaultValue = "0") Long skip,
-            @RequestParam(name = "take", defaultValue = "50") Long take,
-            @RequestParam(name = "amenity", defaultValue = "A") String amenity)
-    {
-        System.out.println("start?");
-        System.out.println(String.format("Points: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", bboxTLX, bboxTLY, bboxBRX,
-                bboxBRY, skip, take, amenity));
-
-        /*
-        //SAMPLE CODE EXAMPLE REQUEST
-        Parser.parsed_params pp = new parsed_params();
-        pp.bbox = true;
-        pp.bbox_tl = new double[]{15.45534, 47.05938};
-        pp.dist = 100;
-        pp.skip = (long)0;
-        pp.take = (long)2;
-        pp.type = "restaurant";
-        //SAMPLE END
-        */
-        Parser.parsed_params pp;
-        String requested_List;
-        try{
-            pp = Parser.checkBoundsBBox(bboxTLX, bboxTLY, bboxBRX, bboxBRY, skip, take, amenity);
-            requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
-                    true, pp.getTake(), pp.getSkip());
-        }catch (Exception e)
-        {
-            throw e;
-        }
-        return requested_List;
     }
 
 
@@ -111,16 +88,16 @@ public class MapController {
     //------------------------------------------------------------------------------------------------------------------
     @GetMapping("/roads")
     String getObjectRoad(
-            @RequestParam(name = "bbox.tr.x") Double bboxTLX,
-            @RequestParam(name = "bbox.tr.y") Double bboxTLY,
-            @RequestParam(name = "bbox.bl.x") Double bboxBRX,
-            @RequestParam(name = "bbox.bl.y") Double bboxBRY,
+            @RequestParam(name = "bbox.tl.x") Double bboxTLX,
+            @RequestParam(name = "bbox.tl.y") Double bboxTLY,
+            @RequestParam(name = "bbox.br.x") Double bboxBRX,
+            @RequestParam(name = "bbox.br.y") Double bboxBRY,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
             @RequestParam(name = "road", defaultValue = "A") String road)
     {
-        System.out.println(String.format("Points: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", bboxTLX, bboxTLY, bboxBRX,
-                bboxBRY, skip, take, road));
+        System.out.println(String.format("BBox: %f %f; %f %f\nskip: %d, take: %d, road: %s",
+                bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, road));
         Parser.parsed_params pp;
         String requested_List;
         try{
