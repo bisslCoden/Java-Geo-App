@@ -1,6 +1,8 @@
 package at.tugraz.oop2;
 
 import mapserviceGRPC.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -25,8 +27,12 @@ public class gRPCMiddleware {
             System.out.println("Requesting " + (amenity ? "Amenitiy" : "Road") + " with ID " + id);
             response = client.getObjID(request).getJSON();
         }catch (Exception e){
-            System.out.println("Exception caught: " + e.getMessage());
-            return null;
+            if(e.getMessage().contains("404"))
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+            else
+                throw e;
+            //throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No " + (amenity ? "amenity" : "road") + " with " +
+            //        "specified ID could be found!");
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
@@ -58,8 +64,10 @@ public class gRPCMiddleware {
         try {
             response = client.getObjBbox(request).getJSON();
         }catch (Exception e){
-            System.out.println("Exception caught: " + e.getMessage());
-            throw e;
+            if(e.getMessage().contains("404"))
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+            else
+                throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
@@ -89,8 +97,10 @@ public class gRPCMiddleware {
         try {
             response = client.getAmenityPoint(request).getJSON();
         }catch (Exception e) {
-            System.out.println("Exception caught: " + e.getMessage());
-            throw e;
+            if(e.getMessage().contains("404"))
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+            else
+                throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");

@@ -8,28 +8,14 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 public class MapController {
-    public static final Long DEFAULT_TAKE = 50L;
-    public static final Long DEFAULT_SKIP = 0L;
-    public static final String DEFAULT_TYPE = "A";
 
-    @Data
-    public class parsed_params{
-        boolean bbox;
-        String type = DEFAULT_TYPE;
-        double[] bbox_tl;
-        double[] bbox_br;
-        double[] point;
-        double dist;
-        Long skip = DEFAULT_SKIP;
-        Long take = DEFAULT_TAKE;
-        parsed_params(){}
-    }
 
     @Data
     public class sample_err{
@@ -44,10 +30,21 @@ public class MapController {
     // @param params the parameters fetched from the HTTP Request
     //------------------------------------------------------------------------------------------------------------------
     @GetMapping("/amenities")
-    String getObjectList(@RequestParam Map<String, String> params)
+    String getAmenityPoint(
+            @RequestParam(name = "point.x") Double pointX,
+            @RequestParam(name = "point.y") Double pointY,
+            @RequestParam(name = "point.d") Long pointD,
+            @RequestParam(name = "skip", defaultValue = "0") Long skip,
+            @RequestParam(name = "take", defaultValue = "50") Long take,
+            @RequestParam(name = "amenity", defaultValue = "A") String amenity)
     {
+        System.out.println("start?");
+        System.out.println(String.format("Point: %f %f; %d\nskip: %d, take: %d, amenity: %s", pointX, pointY, pointD,
+                skip, take, amenity));
+
+        /*
         //SAMPLE CODE EXAMPLE REQUEST
-        parsed_params pp = new parsed_params();
+        Parser.parsed_params pp = new parsed_params();
         pp.bbox = true;
         pp.bbox_tl = new double[]{15.45534, 47.05938};
         pp.dist = 100;
@@ -55,28 +52,90 @@ public class MapController {
         pp.take = (long)2;
         pp.type = "restaurant";
         //SAMPLE END
-        System.out.println(pp.isBbox()?"Bbox" : "noot");
-        String requested_List = null;
-        if(pp.isBbox()) {
-            try {
-                requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
-                                true, pp.getTake(), pp.getSkip());
-            } catch (Exception e){
-                System.out.println("Exception caught: " + e.getMessage());
-                return "An Error Occured...";
-            }
+        */
+        Parser.parsed_params pp;
+        String requested_List;
+        try{
+            pp = Parser.checkBoundsPoint(pointX, pointY, pointD, skip, take, amenity);
+            requested_List = gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
+                    pp.getTake(), pp.getSkip());
+        }catch (Exception e)
+        {
+            throw e;
         }
-        else {
-            try{
-                requested_List = gRPCMiddleware.requestAmenPoint(pp.getType(), pp.getPoint(), pp.getDist(),
-                        pp.getTake(), pp.getSkip());
-            } catch (Exception e){
-                System.out.println("Exception caught: " + e.getMessage());
-                return "An Error Occured...";
-            }
+        return requested_List;
+
+    }
+    @GetMapping("/amenities")
+    String  getAmenityBBox(
+            @RequestParam(name = "bbox.tr.x") Double bboxTLX,
+            @RequestParam(name = "bbox.tr.y") Double bboxTLY,
+            @RequestParam(name = "bbox.bl.x") Double bboxBRX,
+            @RequestParam(name = "bbox.bl.y") Double bboxBRY,
+            @RequestParam(name = "skip", defaultValue = "0") Long skip,
+            @RequestParam(name = "take", defaultValue = "50") Long take,
+            @RequestParam(name = "amenity", defaultValue = "A") String amenity)
+    {
+        System.out.println("start?");
+        System.out.println(String.format("Points: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", bboxTLX, bboxTLY, bboxBRX,
+                bboxBRY, skip, take, amenity));
+
+        /*
+        //SAMPLE CODE EXAMPLE REQUEST
+        Parser.parsed_params pp = new parsed_params();
+        pp.bbox = true;
+        pp.bbox_tl = new double[]{15.45534, 47.05938};
+        pp.dist = 100;
+        pp.skip = (long)0;
+        pp.take = (long)2;
+        pp.type = "restaurant";
+        //SAMPLE END
+        */
+        Parser.parsed_params pp;
+        String requested_List;
+        try{
+            pp = Parser.checkBoundsBBox(bboxTLX, bboxTLY, bboxBRX, bboxBRY, skip, take, amenity);
+            requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
+                    true, pp.getTake(), pp.getSkip());
+        }catch (Exception e)
+        {
+            throw e;
         }
         return requested_List;
     }
+
+
+    //------------------------------------------------------------------------------------------------------------------
+    // GET Mapping for BBox Requests for roads
+    // @param params the parameters fetched from the HTTP Request
+    //------------------------------------------------------------------------------------------------------------------
+    @GetMapping("/roads")
+    String getObjectRoad(
+            @RequestParam(name = "bbox.tr.x") Double bboxTLX,
+            @RequestParam(name = "bbox.tr.y") Double bboxTLY,
+            @RequestParam(name = "bbox.bl.x") Double bboxBRX,
+            @RequestParam(name = "bbox.bl.y") Double bboxBRY,
+            @RequestParam(name = "skip", defaultValue = "0") Long skip,
+            @RequestParam(name = "take", defaultValue = "50") Long take,
+            @RequestParam(name = "road", defaultValue = "A") String road)
+    {
+        System.out.println(String.format("Points: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", bboxTLX, bboxTLY, bboxBRX,
+                bboxBRY, skip, take, road));
+        Parser.parsed_params pp;
+        String requested_List;
+        try{
+            pp = Parser.checkBoundsBBox(bboxTLX, bboxTLY, bboxBRX, bboxBRY, skip, take, road);
+            requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
+                    false, pp.getTake(), pp.getSkip());
+        }catch (Exception e)
+        {
+            throw e;
+        }
+        return requested_List;
+    }
+
+
+
 
     //------------------------------------------------------------------------------------------------------------------
     // GET Mapping for getting Amenity by ID
@@ -87,38 +146,13 @@ public class MapController {
     {
         String requested_amend;
         try {
-            requested_amend = gRPCMiddleware.requestObjID(id, true);
+            requested_amend = gRPCMiddleware.requestObjID(Parser.parseID(id), true);
         } catch (Exception e){
-            System.out.println("Exception caught: " + e.getMessage());
-            return "An Error Occured...";
+            throw e;
         }
         return requested_amend;
     }
 
-    //------------------------------------------------------------------------------------------------------------------
-    // GET Mapping for BBox Requests for roads
-    // @param params the parameters fetched from the HTTP Request
-    //------------------------------------------------------------------------------------------------------------------
-    @GetMapping("/roads")
-    String getObjectRoad(@RequestParam Map<String, String> params)
-    {
-        //SAMPLE CODE EXAMPLE REQUEST
-        parsed_params pp = new parsed_params();
-        pp.bbox = true;
-        pp.bbox_tl = new double[]{15.34, 17.45};
-        pp.bbox_br = new double[]{19.64, 20.45};
-        //SAMPLE END
-
-        String requested_List = null;
-            try {
-                requested_List = gRPCMiddleware.requestObjBbox(pp.getType(), pp.getBbox_tl(), pp.getBbox_br(),
-                        false, pp.getTake(), pp.getSkip());
-            } catch (Exception e){
-                System.out.println("Exception caught: " + e.getMessage());
-                return "An Error Occured...";
-            }
-        return requested_List;
-    }
 
     //------------------------------------------------------------------------------------------------------------------
     // GET Mapping for getting Road by ID
@@ -129,10 +163,9 @@ public class MapController {
     {
         String requested_road;
         try {
-            requested_road = gRPCMiddleware.requestObjID(id, false);
+            requested_road = gRPCMiddleware.requestObjID(Parser.parseID(id), false);
         } catch (Exception e){
-            System.out.println("Exception caught: " + e.getMessage());
-            return "An Error Occured...";
+            throw e;
         }
         return requested_road;
     }
