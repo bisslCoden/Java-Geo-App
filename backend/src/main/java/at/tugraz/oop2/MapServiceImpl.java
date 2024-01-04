@@ -80,20 +80,21 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
                 request.getBboxTl().getX(), request.getBboxTl().getY(), request.getBboxBr().getX(), request.getBboxBr().getY(),
                 width, height));
         MapObject[] result;
+        Long total = 0L;
         //Calling Map function to get the Amenities in the specified box
         if (request.getAmenity())
         {
-            result = Map.getInstance().getAmenities(BBox, request.getType(), request.getSkip(), request.getTake(), (long)0);
+            result = Map.getInstance().getAmenities(BBox, request.getType(), request.getSkip(), request.getTake(), total);
         }
         else
         {
-            result = Map.getInstance().getRoads(BBox, request.getType(),  request.getSkip(),  request.getTake(), (long)0);
+            result = Map.getInstance().getRoads(BBox, request.getType(),  request.getSkip(),  request.getTake(), total);
         }
         //Creating the paging map for Listresponse
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());
         paging.put("take",request.getTake());
-        paging.put("total", (long) result.length);
+        paging.put("total", total);
 
         //same thing here: this is still an exception if nothing can be found in the box, but we could formulate it as
         //errorJSON and serialize it
@@ -126,14 +127,15 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         double range = request.getDist();
 
         //DEBUG: See how the Point arrives in Backend
+        Long total = 0L;
         logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
         MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), request.getSkip(),
-                request.getTake(), (long)0);
+                request.getTake(), total);
 
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());
         paging.put("take",request.getTake());
-        paging.put("total", (long) result.length);
+        paging.put("total", total);
 
         System.out.println("The length of output: " + result.length);
         //Nothing was found in this case
