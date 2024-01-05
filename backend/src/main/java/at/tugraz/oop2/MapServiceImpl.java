@@ -169,6 +169,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         PNG_image response = null;
         filters.addAll(request.getFiltersList());
         ByteString g = Map.getInstance().getTile(request.getX(), request.getY(), request.getZ(), filters);
+        System.out.println("Bystring result with length " + g.size());
         response = PNG_image.newBuilder().setData(g).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
