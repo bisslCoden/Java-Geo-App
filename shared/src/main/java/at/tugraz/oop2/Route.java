@@ -1,5 +1,8 @@
 package at.tugraz.oop2;
 
+import lombok.Data;
+
+@Data
 public class Route {
     Route(Double length, Double time, Road[] roads) {
         this.length = length;

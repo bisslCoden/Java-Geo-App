@@ -64,6 +64,7 @@ public class gRPCBackend {
         String jsonString = null;
         try {
             jsonString = objMapp.writeValueAsString(result);
+            System.out.println(jsonString);
         }catch (Exception e)
         {
             System.out.println(e.getMessage());

@@ -1,5 +1,8 @@
 package at.tugraz.oop2;
 
+import lombok.Data;
+
+@Data
 public class Usages {
     Usages(Double area, Usage[] usages) {
         this.area = area;

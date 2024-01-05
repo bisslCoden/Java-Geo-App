@@ -14,7 +14,7 @@ public class Parser {
     public static final Long DEFAULT_SKIP = 0L;
     public static final String DEFAULT_TYPE = "A";
     public static final int REQ_MAX_PARAMS = 7;
-    public static final Long MAX_PARAM = 70000000L;
+    public static final Long MAX_PARAM = Long.MAX_VALUE;
     public static final int REQ_MIN_PARAMS = 3;
     public static final String[] allowedParams = {"bbox.tl.x", "bbox.tl.y", "bbox.br.x",
             "bbox.br.y", "point.x", "point.y", "point.d", "take", "skip", "amenity", "road"};
