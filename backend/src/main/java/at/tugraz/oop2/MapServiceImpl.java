@@ -80,7 +80,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
                 request.getBboxTl().getX(), request.getBboxTl().getY(), request.getBboxBr().getX(), request.getBboxBr().getY(),
                 width, height));
         MapObject[] result;
-        Long total = 0L;
+        Long total[] = new Long[1];
         //Calling Map function to get the Amenities in the specified box
         if (request.getAmenity())
         {
@@ -94,7 +94,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());
         paging.put("take",request.getTake());
-        paging.put("total", total);
+        paging.put("total", total[0]);
 
         //same thing here: this is still an exception if nothing can be found in the box, but we could formulate it as
         //errorJSON and serialize it
@@ -127,7 +127,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         double range = request.getDist();
 
         //DEBUG: See how the Point arrives in Backend
-        Long total = 0L;
+        Long total[] = new Long[1];
         logger.info(String.format("\tGot request for (%f|%f) and %f.", point.x, point.y, range));
         MapObject[] result = Map.getInstance().getAmenities(point, range, request.getType(), request.getSkip(),
                 request.getTake(), total);
@@ -135,7 +135,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         HashMap<String, Long> paging = new HashMap<>();
         paging.put("skip",request.getSkip());
         paging.put("take",request.getTake());
-        paging.put("total", total);
+        paging.put("total", total[0]);
 
         System.out.println("The length of output: " + result.length);
         //Nothing was found in this case

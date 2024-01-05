@@ -58,38 +58,48 @@ public class MapData {
         }
         return null;
     }
-    public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long total) {
+    public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
         List<Amenity> result = new ArrayList<Amenity>();
 
+        total[0] = 0L;
         int skipped = 0, took = 0;
         for(Amenity amenity : _amenities) {
             // filter
-            if(took >= take) break;
-            if(!amenity.type.equals(type)) continue; // TODO: verify
+            if(!amenity.type.equals(type)) continue;
             if(!isInside(frame, amenity.geom)) continue;
+            ++total[0];
+
+            // skip
             if(skipped < skip) { ++skipped; continue; }
 
             // take
-            result.add(amenity);
-            ++took;
+            if(took < take) {
+                result.add(amenity);
+                ++took;
+            }
         }
 
         return result.toArray(new Amenity[0]);
     }
-    public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long total) {
+    public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long[] total) {
         List<Amenity> result = new ArrayList<>();
 
+        total[0] = 0L;
         int skipped = 0, took = 0;
         for(Amenity amenity : _amenities) {
             // filter
-            if(took >= take) break;
-            if(!amenity.type.equals(type)) continue; // TODO: verify
+            if(!amenity.type.equals(type)) continue;
             if(!isInside(point, distance, amenity.geom)) continue;
+            ++total[0];
+
+            // skip
             if(skipped < skip) { ++skipped; continue; }
 
             // take
-            result.add(amenity);
-            ++took;
+            if(took < take) {
+                result.add(amenity);
+                ++took;
+            }
         }
 
         return result.toArray(new Amenity[0]);
@@ -100,20 +110,25 @@ public class MapData {
             if(road.id == id) return road;
         return null;
     }
-    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long Total) {
+    public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
         List<Road> result = new ArrayList<Road>();
 
+        total[0] = 0L;
         int skipped = 0, took = 0;
         for(Road road : _roads) {
             // filter
-            if(took >= take) break;
-            if(!road.type.equals(type)) continue; // TODO: verify
+            if(!road.type.equals(type)) continue;
             if(!isInside(frame, road.geom)) continue;
+            ++total[0];
+
+            // skip
             if(skipped < skip) { ++skipped; continue;}
 
             // take
-            result.add(road);
-            ++took;
+            if(took < take) {
+                result.add(road);
+                ++took;
+            }
         }
 
         return result.toArray(new Road[0]);
