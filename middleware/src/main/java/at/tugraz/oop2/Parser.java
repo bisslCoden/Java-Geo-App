@@ -84,7 +84,7 @@ public class Parser {
         }
         if (BBox_BRX < BBox_TLX)
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
-        else if(BBox_TLY < BBox_BRY)
+        else if(BBox_BRY > BBox_TLY)
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
 
     }
@@ -102,7 +102,7 @@ public class Parser {
 
     private static void checkV(Long v)
     {
-        if(v <= 0 || v > MAX_PARAM)
+        if(v < 0 || v > MAX_PARAM)
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Parameter out of bounds");
     }
     /*
