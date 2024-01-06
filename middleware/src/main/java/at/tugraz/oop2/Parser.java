@@ -4,6 +4,7 @@ package at.tugraz.oop2;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
@@ -37,7 +38,7 @@ public class Parser {
             return true;
         else if (input.equals("time"))
             return false;
-        else throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+        else throw new GeoExcept(HttpStatus.BAD_REQUEST, "weight neither time or length");
     }
 
     public static parsed_params checkBoundsPoint(Double pointX, Double pointY,Long Dist, Long skip, Long take, String type)
@@ -82,26 +83,27 @@ public class Parser {
             throw e;
         }
         if (BBox_BRX < BBox_TLX)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
         else if(BBox_TLY < BBox_BRY)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
+
     }
 
     private static void checkX(Double x)
     {
         if (x < 12.000 || x > 18.000)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "X Coords out of bounds");
     }
     private static void checkY(Double y)
     {
         if (y < 42.000 || y > 51.000)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Y Coords out of bounds");
     }
 
     private static void checkV(Long v)
     {
-        if(v < 0 || v > MAX_PARAM)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+        if(v <= 0 || v > MAX_PARAM)
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Parameter out of bounds");
     }
     /*
     public static parsed_params parseObjReq(Map<String, String> input, boolean amenity)

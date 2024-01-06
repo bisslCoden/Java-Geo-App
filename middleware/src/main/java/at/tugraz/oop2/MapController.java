@@ -7,8 +7,10 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -82,6 +84,7 @@ public class MapController {
     }
 
 
+
     //------------------------------------------------------------------------------------------------------------------
     // GET Mapping for BBox Requests for roads
     // @param params the parameters fetched from the HTTP Request
@@ -143,8 +146,31 @@ public class MapController {
             requested_road = gRPCMiddleware.requestObjID(Parser.parseID(id), false);
         } catch (Exception e){
             throw e;
+            /*ObjectMapper m = new ObjectMapper();
+            String res;
+            System.out.println("now throwing" + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "works?", e);
+            try{
+                res = m.writeValueAsString(new ));
+            }catch (Exception a)
+            {
+                throw e;
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+        */
         }
         return requested_road;
+    }
+
+    @ExceptionHandler (GeoExcept.class)
+    public ResponseEntity<GeoExcept.ErrorMSG> handleCustomException(GeoExcept Exc)
+    {
+        return ResponseEntity.status(Exc.getStatus()).body(Exc.getMsg());
+    }
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<GeoExcept.ErrorMSG> handleBadInput(NoHandlerFoundException Exc)
+    {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GeoExcept.ErrorMSG("Bad Parameters"));
     }
 
     @GetMapping("/tile/{z}/{x}/{y}.png")
