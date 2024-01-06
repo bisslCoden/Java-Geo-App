@@ -10,8 +10,8 @@ public class GeoExcept extends RuntimeException{
     ErrorMSG msg;
     @Data
     public static class ErrorMSG{
-        String msg;
-        ErrorMSG(String msg_i){ this.msg = msg_i; }
+        String message;
+        ErrorMSG(String msg_i){ this.message = msg_i; }
     }
     public GeoExcept(HttpStatus status, String msg){
         this.msg = new ErrorMSG(msg);
