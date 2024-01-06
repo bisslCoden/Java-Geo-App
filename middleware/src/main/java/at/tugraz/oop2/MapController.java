@@ -54,13 +54,13 @@ public class MapController {
         if (bboxTLX != null && bboxTLY != null && bboxBRX != null && bboxBRY != null)
         {
             if (pointX != null && pointY != null && pointD != null)
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+                throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid Parameters");
             else bbox = true;
         }
         else if (pointX != null && pointY != null && pointD != null)
             bbox = false;
         else
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid Parameters");
 
         Parser.parsed_params pp;
         String requested_List;
