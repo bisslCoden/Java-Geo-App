@@ -8,6 +8,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -170,7 +172,13 @@ public class MapController {
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<GeoExcept.ErrorMSG> handleBadInput(NoHandlerFoundException Exc)
     {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GeoExcept.ErrorMSG("Bad Parameters"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new GeoExcept.ErrorMSG("No Handler found"));
+    }
+
+    @ExceptionHandler({MethodArgumentNotValidException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity<GeoExcept.ErrorMSG> handleInputexc(Exception Exc)
+    {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GeoExcept.ErrorMSG("Parameters Invalid"));
     }
 
     @GetMapping("/tile/{z}/{x}/{y}.png")
