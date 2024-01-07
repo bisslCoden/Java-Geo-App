@@ -66,7 +66,7 @@ public class MapData {
         int skipped = 0, took = 0;
         for(Amenity amenity : _amenities) {
             // filter
-            if(!amenity.type.equals(type)) continue;
+            if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(frame, amenity.geom)) continue;
             ++total[0];
 
@@ -90,7 +90,7 @@ public class MapData {
         int skipped = 0, took = 0;
         for(Amenity amenity : _amenities) {
             // filter
-            if(!amenity.type.equals(type)) continue;
+            if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(point, distance, amenity.geom)) continue;
             ++total[0];
 
@@ -121,7 +121,7 @@ public class MapData {
         int skipped = 0, took = 0;
         for(Road road : _roads) {
             // filter
-            if(!road.type.equals(type)) continue;
+            if(!type.isEmpty() && !road.type.equals(type)) continue;
             if(!isInside(frame, road.geom)) continue;
             ++total[0];
 

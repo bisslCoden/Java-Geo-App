@@ -30,6 +30,7 @@ public class Map {
         return _data.getAmenities(bbox, type, skip, take, total);
     }
     public Amenity[] getAmenities(Point2D.Double point, Double distance,String type, Long skip, Long take, Long[] total) {
+        System.out.println("Type: " + type);
         return _data.getAmenities(point, distance, type, skip, take, total);
     }
     public Road getRoad(Long id) {

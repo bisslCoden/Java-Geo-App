@@ -13,6 +13,7 @@ import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
