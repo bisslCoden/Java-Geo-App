@@ -147,6 +147,7 @@ public class MapData {
     }
 
     public Usages getUsage(Rectangle2D.Double frame) {
+        System.out.println("Frame: " + frame.x + ","+frame.y+","+(frame.x+frame.width)+","+(frame.y+frame.height));
         // TODO: fix
         // transform frame
         Geometry frame_geom = new GeometryFactory().createPolygon(new Coordinate[] {
