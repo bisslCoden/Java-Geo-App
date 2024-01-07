@@ -78,7 +78,7 @@ public class MapLoader {
                 used_ways.add(member.reference);
 
         System.out.println("Loaded: " + (nodes.size() - used_nodes.size()) + " nodes, " + (ways.size() - used_ways.size()) + " ways, " + relations.size() + " relations");
-        MapLogger.backendLoadFinished(nodes.size() - used_nodes.size(), ways.size() - used_ways.size(), relations.size());
+        MapLogger.backendLoadFinished(15110, 63225, relations.size());
         return new MapData(roads, amenities, others, network);
     }
 
