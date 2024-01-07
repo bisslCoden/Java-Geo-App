@@ -68,8 +68,18 @@ public class MapLoader {
         Graph network = null;
         link(ways, nodes, network);
 
-        System.out.println("Loaded: " + nodes.size() + " nodes, " + ways.size() + " ways, " + relations.size() + " relations");
-        MapLogger.backendLoadFinished(nodes.size(), ways.size(), relations.size());
+        Set<Long> used_nodes = new HashSet<>();
+        for(Way way : ways) {
+            used_nodes.addAll(way.references);
+        }
+        Set<Long> used_ways = new HashSet<>();
+
+        for(Relation relation : relations)
+            for(Relation.Member member : relation.members)
+                used_ways.add(member.reference);
+
+        System.out.println("Loaded: " + (nodes.size() - used_nodes.size()) + " nodes, " + (ways.size() - used_ways.size()) + " ways, " + relations.size() + " relations");
+        MapLogger.backendLoadFinished(nodes.size() - used_nodes.size(), ways.size() - used_ways.size(), relations.size());
         return new MapData(roads, amenities, others, network);
     }
 
@@ -443,7 +453,7 @@ public class MapLoader {
         );
 
         return result;
-   }
+    }
 
 
     private static MapObject constructMapObject(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
