@@ -181,7 +181,7 @@ public class MapController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GeoExcept.ErrorMSG("Parameters Invalid"));
     }
 
-    @GetMapping("/tile/{z}/{x}/{y}.png") //TODO: "/tile/{}/{}/{}" used in frontend?!
+    @GetMapping("/tile/{z}/{x}/{y}") //TODO: "/tile/{}/{}/{}" used in frontend?!
     byte[] getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y,
                   @RequestParam (name = "layers", defaultValue = "motorway") List<String> layers)
     {
