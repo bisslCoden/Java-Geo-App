@@ -82,22 +82,23 @@ public class Parser {
         }catch (Exception e){
             throw e;
         }
-        if (BBox_BRX < BBox_TLX)
-            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
-        else if(BBox_BRY > BBox_TLY)
-            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
+        //if (BBox_BRX < BBox_TLX)
+        //    throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
+        //else if(BBox_BRY > BBox_TLY)
+        //    throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
 
     }
 
     private static void checkX(Double x)
     {
-        if (x < 12.000 || x > 18.000)
-            throw new GeoExcept(HttpStatus.BAD_REQUEST, "X Coords out of bounds");
+        //12.000 || x > 18.000
+        //if (x <= 0)
+        //    throw new GeoExcept(HttpStatus.BAD_REQUEST, "X Coords out of bounds");
     }
     private static void checkY(Double y)
     {
-        if (y < 42.000 || y > 51.000)
-            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Y Coords out of bounds");
+        //if (y < 42.000 || y > 51.000)
+        //    throw new GeoExcept(HttpStatus.BAD_REQUEST, "Y Coords out of bounds");
     }
 
     private static void checkV(Long v)
