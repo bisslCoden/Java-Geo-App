@@ -11,6 +11,7 @@ import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.line.XYNode;
 import org.hsqldb.lib.HsqlArrayHeap;
+import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.referencing.operation.MathTransform;
@@ -173,10 +174,13 @@ public class MapData {
             if(!isInside(frame, other.geom)) continue;
             Double value = shares.getOrDefault(key, 0.0);
 
-            Geometry target = null;
+            if(!other.geom.getGeometryType().equals("Polygon")) continue;
+            Geometry target = other.geom;
+            Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
+            target = JTS.toGeometry(bbox).intersection(target);
 
             try {
-                target = JTS.transform(other.geom, _transform);
+                target = JTS.transform(target, _transform);
             } catch (TransformException e) {
                 throw new RuntimeException(e);
             }
@@ -195,7 +199,12 @@ public class MapData {
             Double share = area / usage;
             usages.add(new Usage(type, share, area));
         }
-
+        Collections.sort(usages, new Comparator<Usage>() {
+            @Override
+            public int compare(Usage u1, Usage u2) {
+                return Double.compare(u1.share, u2.share);
+            }
+        });
         return new Usages(usage, usages.toArray(new Usage[0]));
     }
 
