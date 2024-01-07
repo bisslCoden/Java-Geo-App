@@ -84,7 +84,7 @@ To give you a quick overview of the system you should design, an architecture di
 
 We first want to outline how we want you to design the API as we will test on this *exact* specification like structure and naming of the variables, but in different ways throughout the course. We furthermore mark the requests using either *A0, A1,* or *A2* so that you know when to consider these specifications. Please consider also possible errors as described further down for the argument constraints!
 
-Please note that all `x`/`y` inputs have to be within the latitude/longitude bounds specified. Furthermore, sort the results by their respective ID's you find in the CSVs. This is required to keep paging consistent.
+**Please note that all `x`/`y` inputs have to be within the latitude/longitude bounds specified. Furthermore, sort the results by their respective ID's you find in the XML. This is required to keep paging consistent.** 
 
 
 ## Request: `GET /amenities` *[A0, A1]*
@@ -161,7 +161,7 @@ Nature:
 * water `rbg(0,128,255)` (any entity with key `water`)
 
 *Parameters:* 
-* `filter` (default: `motorway`): comma-separated list of layers to display, these should be drawn in the order specified (the last one is drawn last)
+* `layers` (default: `motorway`): comma-separated list of layers to display, these should be drawn in the order specified (the last one is drawn last)
 
 *Return format*:
 A `PNG`, indicated by the `Content-Type`-Header.
@@ -173,7 +173,7 @@ This request will request a route from the with ID `from` to the node with ID `t
 *Parameters:*
 * `from`: start node ID
 * `to`: end node ID
-* `weigthing`: either `time` or `length`, see below for more information (default: `length`)
+* `weighting`: either `time` or `length`, see below for more information (default: `length`)
 
 *Return format*:
 
@@ -231,21 +231,26 @@ Next, you should load the ways (type `way`), which consists of multiple nodes. T
 The last type to load are the relations (type `relation`), where these are to be handled in a very specific way. This [article has some great illustrations](https://wiki.openstreetmap.org/wiki/Relation:multipolygon) of edge cases. However, to make it easier for you we provide you with pseudocode (note: the members of the relation can be fetched in a similar fashion to the ways, and you can ignore ways if they are not present):
 
 ```python
+# this method only builds the JTS geometry for relations!
 def buildGeom(members:list, tags: dict{str,str}) -> GeometryCollection:
   if "multipolygon" in tags:
     multi_polygons=[]
     inners=[]
     outer=None
     for(i=0; i<members.lenght;):
-      closed_circle=getNextClosed(i, members)
-      # this iterates over the next memebers and returns a polygon 
-      # if it is able to find a combination of coordinated in the next 
-      # (one or more) *same* role-types, 
-      # i.e. a closed ring of only outer or inner line segments
+      closed_circle=getNextClosed(i, members) 
+      # getNextClosed greedily iterates through the next members of 
+      # the *same* type and builds the next closed polygon by 
+      # iterating through all next referenced ways (and trying the
+      # reversed ones too!) and combining them into a ring - if they 
+      # form a closed one, the Polygon is finished 
+      # (should work for **all** relations!)
+
       if closed_circle:
         if closed_circle.last_role=="outer":
           if outer:
             multi_polygons+=[buildMultipolygon([outer, ...inners])] #multipolygons usually have the first ring as the outer one
+            inners=[]
           outer=closed_circle.polygon
 
         elif closed_circle.last_role=="inner":
@@ -257,6 +262,7 @@ def buildGeom(members:list, tags: dict{str,str}) -> GeometryCollection:
     # if there is still a an outer ring pick it up and add it
     if outer:
       multi_polygons+=[buildMultipolygon([outer, ...inners])] 
+      inners=[]
     return buildGeometrycollection(multi_polygons)
   else:
     return buildGeometrycollection(members)
@@ -306,6 +312,21 @@ Besides the computationally correct implementation we also want you to consider 
 ### Usage (10P)
 
 Here you should implement the endpoint `/usage` which should return the percentage and area used by different landusage types. To accomplish this, you will first need to convert the areas of these from `EPSG:4326` to `EPSG:31256` (as above, so you could cache the results!), intersect these with the requested bounding box (which will need to be converted, too!), calculate the area of this bounding box and all the intersections, and then calculate the part the individual, grouped landusage types have on the total requested area. Please note that you have to order the categories by share! This is only an approximate solution, but good enough for our purposes as we assume a flat geometry locally using `EPSG:31256`. Keep possible error and parameter checks in mind, as usual!
+
+# FAQ
+
+* When using the Java DOM parser `javax.xml.*` you may want to access the length of child notes only once and save it in a variable as we are not restructuring the XML - your data loading might slow down significantly otherwise!
+* Please note that you have to move the data to the middleware **on-demand**! You are not allowed to transfer all the data!
+* The request are also paged  - so there is (default) information on how many entities to return for each call!
+* Note that you can use hashmaps for quick ID lookups (O(log(N)) instead of O(N)!)
+* It is advisable that you already reformat the data from the different OSM types to either roads or amenities in the backend, simplifying your gRPC structure a lot (you are free to also transform in the middleware, just note that you have to build some kind of abstraction in gRPC for that!)
+* OSM ways and nodes do **not** correspond to roads and nodes - amenities can be ways too (and vice-versa) (as an amenity could be  e.g. a closed way to indicate the building outline)
+* all relations should be at least tried to be built (and succeed, there are **no** invalid ones!)
+* to keep paging consistent, sort the results by their ID in ascending order!
+* Read the `MapLogger.java`'s method description **thoroughly** - log all events that might happen, you should use all methods in the end (even those from A0 in A1!)!
+* Try to keep below ~3GB RAM consumption and load data within ~10 seconds, you will run into timeouts otherwise!
+* Consider using proper exception as outlined in [this tutorial](https://www.baeldung.com/exception-handling-for-rest-with-spring), this cleans things up -`@ControllerAdvice` is the nicest solution!
+* **Use** the environment variables we provide to connect to the backend and load the XML file!
 
 # Getting Started
 

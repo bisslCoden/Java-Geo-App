@@ -232,7 +232,7 @@
             if (current_tile_layer != null) {
                 map.removeLayer(current_tile_layer)
             }
-            let url = base_url + '/tiles/{z}/{x}/{y}?layers=' + layers.join(',')
+            let url = base_url + '/tile/{z}/{x}/{y}?layers=' + layers.join(',')
             current_tile_layer = L.tileLayer(url, {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/">OpenStreetMap</a>'
