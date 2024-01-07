@@ -13,8 +13,7 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.Rectangle2D;
 import java.awt.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 public class MapRenderer {
@@ -79,8 +78,10 @@ public class MapRenderer {
         // draw to image
         gfx.setBackground(color_background);
         gfx.clearRect(0, 0, 512, 512);
+
+        ArrayList<Long> entities = new ArrayList<>();
         for(int index = layers.size() - 1; index >= 0; --index) {
-            RenderLayer(frame, layers.get(index), image, gfx, data);
+            RenderLayer(frame, layers.get(index), image, gfx, data, entities);
         }
 
 
@@ -95,15 +96,16 @@ public class MapRenderer {
             throw new RuntimeException(e);
         }
         System.out.println(" Done!");
+        Collections.sort(entities);
+        MapLogger.backendLogMapEntities(entities);
         // convert to and return ByteString
         return ByteString.copyFrom(buffer.toByteArray());
     }
 
-    static private void RenderLayer(Rectangle2D.Double boundingBox, String layer, BufferedImage iamge, Graphics2D gfx, MapData data) {
+    static private void RenderLayer(Rectangle2D.Double boundingBox, String layer, BufferedImage iamge, Graphics2D gfx, MapData data, List<Long> entities) {
         // TODO: complete rework
         // - implement function to be used by all MapObjects
         // - implement rendering of point
-        ArrayList<Long> entities = new ArrayList<>();
         Info info = Lookup.getOrDefault(layer, new Info(stroke_2px, color_residential));
         gfx.setColor(info.color);
         if(info.stroke != null) // TODO: maybe can be removed...
@@ -235,7 +237,6 @@ public class MapRenderer {
                 }
             }
         }
-        MapLogger.backendLogMapEntities(entities);
     }
 
     static private Rectangle2D.Double tileToBoundingBox(int x, int y, int z) {
