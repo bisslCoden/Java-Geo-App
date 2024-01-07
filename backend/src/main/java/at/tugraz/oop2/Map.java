@@ -39,8 +39,8 @@ public class Map {
     public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
         return _data.getRoads(frame, type, skip, take, total);
     }
-    public ByteString getTile(Integer x, Integer y, Integer z, List<String> filter) {
-        return MapRenderer.getTile(x, y, z, filter, _data);
+    public ByteString getTile(Integer x, Integer y, Integer z, List<String> layers) {
+        return MapRenderer.getTile(x, y, z, layers, _data);
     }
     public Route getRoute(Long from, Long to, boolean weighting) {
         return _data.getRoute(from, to, weighting);

@@ -46,7 +46,7 @@ public class MapController {
             @RequestParam(name = "point.d", required = false) Long pointD,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
-            @RequestParam(name = "amenity", defaultValue = "A") String amenity)
+            @RequestParam(name = "amenity", defaultValue = "") String amenity)
     {
         System.out.println(String.format("Point: %f %f; %d\nBBox: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", pointX,
                 pointY, pointD, bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, amenity));
@@ -99,7 +99,7 @@ public class MapController {
             @RequestParam(name = "bbox.br.y") Double bboxBRY,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
-            @RequestParam(name = "road", defaultValue = "A") String road)
+            @RequestParam(name = "road", defaultValue = "") String road)
     {
         System.out.println(String.format("BBox: %f %f; %f %f\nskip: %d, take: %d, road: %s",
                 bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, road));
@@ -181,17 +181,17 @@ public class MapController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GeoExcept.ErrorMSG("Parameters Invalid"));
     }
 
-    @GetMapping("/tile/{z}/{x}/{y}.png")
+    @GetMapping("/tile/{z}/{x}/{y}.png") //TODO: "/tile/{}/{}/{}" used in frontend?!
     byte[] getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y,
-                  @RequestParam (name = "filter", defaultValue = "motorway") List<String> filters)
+                  @RequestParam (name = "layers", defaultValue = "motorway") List<String> layers)
     {
         //DEBUG
         System.out.println(String.format("request for tile z: %d x: %d y: %d", z, x, y));
-        for(var f : filters)
+        for(var f : layers)
             System.out.println(f);
         mapserviceGRPC.PNG_image response = null;
         try {
-            response = gRPCMiddleware.request_Image(x, y, z, filters);
+            response = gRPCMiddleware.request_Image(x, y, z, layers);
         }catch (Exception e){
             throw e;
         }

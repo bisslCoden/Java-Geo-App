@@ -66,8 +66,8 @@ public class MapRenderer {
 
 
 
-    static ByteString getTile(Integer x, Integer y, Integer z, List<String> filter, MapData data) {
-        MapLogger.backendLogMapRequest(x, y, z, filter);
+    static ByteString getTile(Integer x, Integer y, Integer z, List<String> layers, MapData data) {
+        MapLogger.backendLogMapRequest(x, y, z, layers);
         System.out.print("[MapRenderer]: started rendering tile...");
         // create image
         BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
@@ -79,8 +79,8 @@ public class MapRenderer {
         // draw to image
         gfx.setBackground(color_background);
         gfx.clearRect(0, 0, 512, 512);
-        for(int index = filter.size() - 1; index >= 0; --index) {
-            RenderLayer(frame, filter.get(index), image, gfx, data);
+        for(int index = layers.size() - 1; index >= 0; --index) {
+            RenderLayer(frame, layers.get(index), image, gfx, data);
         }
 
 
@@ -241,9 +241,9 @@ public class MapRenderer {
     static private Rectangle2D.Double tileToBoundingBox(int x, int y, int z) {
         Rectangle2D.Double boundingBox = new Rectangle2D.Double();
         boundingBox.x = tileToLongitude(x, z);
-        boundingBox.y = tileToLatitude(y + 1, z);
+        boundingBox.y = tileToLatitude(y, z);
         boundingBox.width = tileToLongitude(x + 1, z) - boundingBox.x;
-        boundingBox.height = tileToLatitude(y, z) - boundingBox.y;
+        boundingBox.height = tileToLatitude(y + 1, z) - boundingBox.y;
         return boundingBox;
     }
 

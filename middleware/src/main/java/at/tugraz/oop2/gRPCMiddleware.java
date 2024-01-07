@@ -128,12 +128,12 @@ public class gRPCMiddleware {
     // @param take paging info how many instances are requested
     // @param skip paging ingo how many instances are to be skipped
     //------------------------------------------------------------------------------------------------------------------
-    static PNG_image request_Image(int x, int y, int z, List<String> filters)
+    static PNG_image request_Image(int x, int y, int z, List<String> layers)
     {
         PNG_image resp_PNG = null;
         var client = MapApplication.getStub();
         req_image.Builder request = req_image.newBuilder().setX(x).setY(y).setZ(z);
-        for(var s : filters)
+        for(var s : layers)
             request.addFilters(s);
         try {
             resp_PNG = client.getImage(request.build());
