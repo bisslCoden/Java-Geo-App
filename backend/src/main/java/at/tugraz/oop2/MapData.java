@@ -54,7 +54,6 @@ public class MapData {
         MapLogger.backendLogAmenityRequest((int)(long)id);
         for(Amenity amenity : _amenities)
         {
-            System.out.println(amenity.id);
             if(amenity.id == id) return amenity;
         }
         return null;
