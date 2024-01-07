@@ -68,6 +68,8 @@ public class MapLoader {
         Graph network = null;
         link(ways, nodes, network);
 
+        System.out.println("Loaded: " + nodes.size() + " nodes, " + ways.size() + " ways, " + relations.size() + " relations");
+        MapLogger.backendLoadFinished(nodes.size(), ways.size(), relations.size());
         return new MapData(roads, amenities, others, network);
     }
 

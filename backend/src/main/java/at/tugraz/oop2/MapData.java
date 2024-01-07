@@ -51,6 +51,7 @@ public class MapData {
 
     // methods
     public Amenity getAmenity(Long id) {
+        MapLogger.backendLogAmenityRequest((int)(long)id);
         for(Amenity amenity : _amenities)
         {
             System.out.println(amenity.id);
@@ -59,6 +60,7 @@ public class MapData {
         return null;
     }
     public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
+        MapLogger.backendLogAmenitiesRequest();
         List<Amenity> result = new ArrayList<Amenity>();
 
         total[0] = 0L;
@@ -82,6 +84,7 @@ public class MapData {
         return result.toArray(new Amenity[0]);
     }
     public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long[] total) {
+        MapLogger.backendLogAmenitiesRequest();
         List<Amenity> result = new ArrayList<>();
 
         total[0] = 0L;
@@ -106,11 +109,13 @@ public class MapData {
     }
 
     public Road getRoad(Long id) {
+        MapLogger.backendLogRoadRequest((int)(long)id);
         for(Road road : _roads)
             if(road.id == id) return road;
         return null;
     }
     public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
+        MapLogger.backendLogRoadsRequest();
         List<Road> result = new ArrayList<Road>();
 
         total[0] = 0L;

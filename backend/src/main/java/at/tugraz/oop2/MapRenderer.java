@@ -1,5 +1,6 @@
 package at.tugraz.oop2;
 
+import org.json.simple.JSONArray;
 import org.locationtech.jts.geom.Coordinate;
 import com.google.protobuf.ByteString;
 import javax.imageio.ImageIO;
@@ -12,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.Rectangle2D;
 import java.awt.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -65,6 +67,7 @@ public class MapRenderer {
 
 
     static ByteString getTile(Integer x, Integer y, Integer z, List<String> filter, MapData data) {
+        MapLogger.backendLogMapRequest(x, y, z, filter);
         System.out.print("[MapRenderer]: started rendering tile...");
         // create image
         BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
@@ -100,6 +103,7 @@ public class MapRenderer {
         // TODO: complete rework
         // - implement function to be used by all MapObjects
         // - implement rendering of point
+        ArrayList<Long> entities = new ArrayList<>();
         Info info = Lookup.getOrDefault(layer, new Info(stroke_2px, color_residential));
         gfx.setColor(info.color);
         if(info.stroke != null) // TODO: maybe can be removed...
@@ -116,6 +120,7 @@ public class MapRenderer {
             if(coordinates.length < 2) {
                 break;
             }
+            entities.add(road.id);
             if(coordinates[0].equals(coordinates[coordinates.length - 1])) { // polygon
                 int[] xs = new int[coordinates.length];
                 int[] ys = new int[coordinates.length];
@@ -140,7 +145,6 @@ public class MapRenderer {
                     c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
                     c1.x = (c1.x - origin.x) * 512 / boundingBox.width;
                     c1.y = (c1.y - origin.y) * 512 / boundingBox.height;
-
                     gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
                 }
             }
@@ -157,6 +161,7 @@ public class MapRenderer {
             if(coordinates.length < 2) {
                 break;
             }
+            entities.add(amenity.id);
             if(coordinates[0].equals(coordinates[coordinates.length - 1])) { // polygon
                 int[] xs = new int[coordinates.length];
                 int[] ys = new int[coordinates.length];
@@ -199,6 +204,7 @@ public class MapRenderer {
             if(coordinates.length < 2) {
                 break;
             }
+            entities.add(other.id);
             if(coordinates[0].equals(coordinates[coordinates.length - 1])) { // polygon
                 int[] xs = new int[coordinates.length];
                 int[] ys = new int[coordinates.length];
@@ -228,8 +234,8 @@ public class MapRenderer {
                     gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
                 }
             }
-
         }
+        MapLogger.backendLogMapEntities(entities);
     }
 
     static private Rectangle2D.Double tileToBoundingBox(int x, int y, int z) {

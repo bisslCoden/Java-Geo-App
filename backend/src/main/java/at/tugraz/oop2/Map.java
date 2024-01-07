@@ -19,7 +19,9 @@ public class Map {
     private Map() {}
 
     // methods
-    public void load(String location) {  _data = MapLoader.load(location); };
+    public void load(String location) {
+        _data = MapLoader.load(location);
+    };
 
     public Amenity getAmenity(Long id) {
         return _data.getAmenity(id);
