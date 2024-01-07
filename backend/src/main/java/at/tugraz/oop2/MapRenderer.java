@@ -13,8 +13,7 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.Rectangle2D;
 import java.awt.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 public class MapRenderer {
@@ -97,6 +96,10 @@ public class MapRenderer {
             throw new RuntimeException(e);
         }
         System.out.println(" Done!");
+<<<<<<< Updated upstream
+=======
+        Collections.sort(entities);
+>>>>>>> Stashed changes
         MapLogger.backendLogMapEntities(entities);
         // convert to and return ByteString
         return ByteString.copyFrom(buffer.toByteArray());
