@@ -82,9 +82,9 @@ public class Parser {
         }catch (Exception e){
             throw e;
         }
-        if (BBox_BRX < BBox_TLX)
+        if (BBox_BRX <= BBox_TLX)
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
-        else if(BBox_BRY > BBox_TLY)
+        else if(BBox_BRY >= BBox_TLY)
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Bbox bounds make no sense");
 
     }
