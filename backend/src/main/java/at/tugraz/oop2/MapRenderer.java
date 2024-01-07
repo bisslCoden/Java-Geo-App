@@ -96,10 +96,7 @@ public class MapRenderer {
             throw new RuntimeException(e);
         }
         System.out.println(" Done!");
-<<<<<<< Updated upstream
-=======
         Collections.sort(entities);
->>>>>>> Stashed changes
         MapLogger.backendLogMapEntities(entities);
         // convert to and return ByteString
         return ByteString.copyFrom(buffer.toByteArray());
