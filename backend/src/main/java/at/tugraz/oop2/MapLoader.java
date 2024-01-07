@@ -69,11 +69,10 @@ public class MapLoader {
         link(ways, nodes, network);
 
         Set<Long> used_nodes = new HashSet<>();
-        for(Way way : ways) {
+        for(Way way : ways)
             used_nodes.addAll(way.references);
-        }
-        Set<Long> used_ways = new HashSet<>();
 
+        Set<Long> used_ways = new HashSet<>();
         for(Relation relation : relations)
             for(Relation.Member member : relation.members)
                 used_ways.add(member.reference);
@@ -306,6 +305,8 @@ public class MapLoader {
     }
     private static Geometry constructGeometry(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         List<Geometry> geometries = new ArrayList<>();
+        List<Relation.Member> temp = new ArrayList<>();
+        temp.addAll(relation.members);
 
         if(relation.tags.containsValue("multipolygon")) { // multipolygon
             List<Geometry> multis = new ArrayList<>();
@@ -359,6 +360,7 @@ public class MapLoader {
             }
         }
 
+        relation.members = temp;
         return new GeometryFactory().createGeometryCollection(geometries.toArray(new Geometry[0]));
     }
 
