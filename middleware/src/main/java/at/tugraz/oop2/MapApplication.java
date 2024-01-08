@@ -42,7 +42,7 @@ public class MapApplication {
                  throw new Exception("Invalid range");
         }catch (Exception e)
         {
-            System.out.println("Something went wront with the port. Reverting to defaults...");
+            System.out.println("Something went wrong with the port. Reverting to defaults...");
             port = 8010;
         }
 

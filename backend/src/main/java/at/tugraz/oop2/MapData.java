@@ -206,6 +206,7 @@ public class MapData {
                 return Double.compare(u1.share, u2.share);
             }
         });
+        if(usages.size() == 0) return null;
         return new Usages(usage, usages.toArray(new Usage[0]));
     }
 

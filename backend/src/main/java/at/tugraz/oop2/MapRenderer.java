@@ -3,6 +3,9 @@ package at.tugraz.oop2;
 import org.json.simple.JSONArray;
 import org.locationtech.jts.geom.Coordinate;
 import com.google.protobuf.ByteString;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
+
 import javax.imageio.ImageIO;
 
 import java.io.ByteArrayOutputStream;
@@ -17,6 +20,10 @@ import java.util.*;
 import java.util.List;
 
 public class MapRenderer {
+    // dimensions 512x512 pixels
+    static private final int WIDTH = 512;
+    static private final int HEIGHT = 512;
+
     // basic strokes
     static private final BasicStroke stroke_2px = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
     static private final BasicStroke stroke_3px = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
@@ -24,7 +31,7 @@ public class MapRenderer {
     // background
     static private final Color color_background = new Color(255, 255, 255);
 
-    // roads
+    // roadss
     static private final Color color_trunk = new Color(255, 140, 0);
     static private final Color color_road = new Color(128, 128, 128);
     static private final Color color_motorway = new Color(255, 0, 0);
@@ -81,7 +88,7 @@ public class MapRenderer {
 
         ArrayList<Long> entities = new ArrayList<>();
         for(int index = layers.size() - 1; index >= 0; --index) {
-            RenderLayer(frame, layers.get(index), image, gfx, data, entities);
+            RenderLayer(frame, layers.get(index), gfx, data, entities);
         }
 
 
@@ -102,140 +109,129 @@ public class MapRenderer {
         return ByteString.copyFrom(buffer.toByteArray());
     }
 
-    static private void RenderLayer(Rectangle2D.Double boundingBox, String layer, BufferedImage iamge, Graphics2D gfx, MapData data, List<Long> entities) {
-        // TODO: complete rework
-        // - implement function to be used by all MapObjects
-        // - implement rendering of point
+    static private void RenderLayer(Rectangle2D.Double frame, String layer, Graphics2D gfx, MapData data, List<Long> entities) {
+
+        // set draw style
         Info info = Lookup.getOrDefault(layer, new Info(stroke_2px, color_residential));
         gfx.setColor(info.color);
         if(info.stroke != null) // TODO: maybe can be removed...
             gfx.setStroke(info.stroke);
 
-        for(Road road : data._roads) {
-            if(!road.tags.containsValue(layer)) continue;
-            if(!data.isInside(boundingBox, road.geom)) continue;
-
-            Coordinate[] coordinates = road.geom.getCoordinates();
-
-            Coordinate origin = new Coordinate(boundingBox.x, boundingBox.y);
-
-            if(coordinates.length < 2) {
-                break;
-            }
-            entities.add(road.id);
-            if(coordinates[0].equals(coordinates[coordinates.length - 1])) { // polygon
-                int[] xs = new int[coordinates.length];
-                int[] ys = new int[coordinates.length];
-
-                for(int index = 0; index < coordinates.length; ++index) {
-                    Coordinate c0 = new Coordinate(coordinates[index]);
-
-                    c0.x = (c0.x - origin.x) * 512 / boundingBox.width;
-                    c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
-                    xs[index] = ((int)c0.x);
-                    ys[index] = ((int)c0.y);
-
-                }
-                gfx.fillPolygon(xs, ys, coordinates.length);
-            }
-            else { // line string
-                for(int index = 0; index < coordinates.length - 1; ++index) {
-                    Coordinate c0 = new Coordinate(coordinates[index]);
-                    Coordinate c1 = new Coordinate(coordinates[index + 1]);
-
-                    c0.x = (c0.x - origin.x) * 512 / boundingBox.width;
-                    c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
-                    c1.x = (c1.x - origin.x) * 512 / boundingBox.width;
-                    c1.y = (c1.y - origin.y) * 512 / boundingBox.height;
-                    gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
-                }
-            }
-
-        }
         for(Amenity amenity : data._amenities) {
             if(!amenity.tags.containsValue(layer)) continue;
-            if(!data.isInside(boundingBox, amenity.geom)) continue;
+            if(!data.isInside(frame, amenity.geom)) continue;
 
-            Coordinate[] coordinates = amenity.geom.getCoordinates();
-
-            Coordinate origin = new Coordinate(boundingBox.x, boundingBox.y);
-
-            if(coordinates.length < 2) {
-                break;
-            }
-            entities.add(amenity.id);
-            if(coordinates[0].equals(coordinates[coordinates.length - 1])) { // polygon
-                int[] xs = new int[coordinates.length];
-                int[] ys = new int[coordinates.length];
-
-                for(int index = 0; index < coordinates.length; ++index) {
-                    Coordinate c0 = new Coordinate(coordinates[index]);
-
-                    c0.x = (c0.x - origin.x) * 512 / boundingBox.width;
-                    c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
-                    xs[index] = ((int)c0.x);
-                    ys[index] = ((int)c0.y);
-
-                }
-                gfx.fillPolygon(xs, ys, coordinates.length);
-                //break;
-            }
-            else { // line string
-                for(int index = 0; index < coordinates.length - 1; ++index) {
-                    Coordinate c0 = new Coordinate(coordinates[index]);
-                    Coordinate c1 = new Coordinate(coordinates[index + 1]);
-
-                    c0.x = (c0.x - origin.x) * 512 / boundingBox.width;
-                    c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
-                    c1.x = (c1.x - origin.x) * 512 / boundingBox.width;
-                    c1.y = (c1.y - origin.y) * 512 / boundingBox.height;
-
-                    gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
-                }
-            }
-
+            renderGeometry(amenity.geom, frame, gfx);
         }
+
+        for(Road road : data._roads) {
+            if(!road.tags.containsValue(layer)) continue;
+            if(!data.isInside(frame, road.geom)) continue;
+
+            renderGeometry(road.geom, frame, gfx);
+        }
+
         for(MapObject other : data._others) {
             if(!other.tags.containsValue(layer)) continue;
-            if(!data.isInside(boundingBox, other.geom)) continue;
+            if(!data.isInside(frame, other.geom)) continue;
 
-            Coordinate[] coordinates = other.geom.getCoordinates();
+            renderGeometry(other.geom, frame, gfx);
+        }
+    }
 
-            Coordinate origin = new Coordinate(boundingBox.x, boundingBox.y);
+    static private void renderGeometry(Geometry geom, Rectangle2D.Double frame, Graphics2D gfx) {
+        List<List<Coordinate>> line_lists = new ArrayList<>();
+        List<List<Double>> polygon_lists_x = new ArrayList<>();
+        List<List<Double>> polygon_lists_y = new ArrayList<>();
 
-            if(coordinates.length < 2) {
-                break;
-            }
-            entities.add(other.id);
-            if(coordinates[0].equals(coordinates[coordinates.length - 1])) { // polygon
-                int[] xs = new int[coordinates.length];
-                int[] ys = new int[coordinates.length];
-
-                for(int index = 0; index < coordinates.length; ++index) {
-                    Coordinate c0 = new Coordinate(coordinates[index]);
-
-                    c0.x = (c0.x - origin.x) * 512 / boundingBox.width;
-                    c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
-
-                    xs[index] = ((int)c0.x);
-                    ys[index] = ((int)c0.y);
+        // build coordinate array
+        switch(geom.getGeometryType()) {
+            case "GeometryCollection": {
+                for(int index = 0; index < geom.getNumGeometries(); ++index) {
+                    renderGeometry(geom.getGeometryN(index), frame, gfx);
                 }
-                gfx.fillPolygon(xs, ys, coordinates.length);
-                //break;
-            }
-            else { // line string
-                for(int index = 0; index < coordinates.length - 1; ++index) {
-                    Coordinate c0 = new Coordinate(coordinates[index]);
-                    Coordinate c1 = new Coordinate(coordinates[index + 1]);
+            } break;
+            case "MultiPolygon": {
+                for(int index = 0; index < geom.getNumGeometries(); ++index) {
+                    Geometry geometry = geom.getGeometryN(index);
 
-                    c0.x = (c0.x - origin.x) * 512 / boundingBox.width;
-                    c0.y = (c0.y - origin.y) * 512 / boundingBox.height;
-                    c1.x = (c1.x - origin.x) * 512 / boundingBox.width;
-                    c1.y = (c1.y - origin.y) * 512 / boundingBox.height;
+                    List<Double> xs = new ArrayList<>();
+                    List<Double> ys = new ArrayList<>();
 
-                    gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
+                    for(Coordinate coord : geometry.getCoordinates()) {
+                        xs.add(coord.x);
+                        ys.add(coord.y);
+                    }
+
+                    polygon_lists_x.add(xs);
+                    polygon_lists_y.add(ys);
                 }
+            } break;
+            case "Polygon": {
+                List<Double> xs = new ArrayList<>();
+                List<Double> ys = new ArrayList<>();
+
+                for(Coordinate coord : geom.getCoordinates()) {
+                    xs.add(coord.x);
+                    ys.add(coord.y);
+                }
+
+                polygon_lists_x.add(xs);
+                polygon_lists_y.add(ys);
+            } break;
+            case "LineString": {
+                line_lists.add(Arrays.stream(geom.getCoordinates()).toList());
+            } break;
+            case "Point": {
+                List<Coordinate> result = new ArrayList<>();
+
+                for(Coordinate coord : geom.getCoordinates()) {
+                    result.add(coord);
+                    result.add(coord);
+                }
+
+                //line_lists.add(result);
+            } break;
+            default: {
+                System.out.println("Something went wrong: Unhandled geometry type!");
+                System.exit(0);
+            } break;
+        }
+
+        // render line coordinates
+        for(List<Coordinate> coord_list : line_lists) {
+            for(int coord_index = 0; coord_index < coord_list.size() - 1; ++coord_index) {
+                // get coordinates
+                Coordinate c0 = new Coordinate(coord_list.get(coord_index));
+                Coordinate c1 = new Coordinate(coord_list.get(coord_index + 1));
+
+                // translate & scale to canvas space
+                c0.x = (c0.x - frame.x) * 512 / frame.width;
+                c0.y = (c0.y - frame.y) * 512 / frame.height;
+                c1.x = (c1.x - frame.x) * 512 / frame.width;
+                c1.y = (c1.y - frame.y) * 512 / frame.height;
+
+                // draw
+                gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
             }
+        }
+
+        // render polygon coordinates
+        for(int polygon_index = 0; polygon_index < polygon_lists_x.size(); ++polygon_index) {
+            // get coordinates
+            List<Double> x_list = polygon_lists_x.get(polygon_index);
+            List<Double> y_list = polygon_lists_y.get(polygon_index);
+            int[] xs = new int[x_list.size()];
+            int[] ys = new int[y_list.size()];
+
+            // translate & scale to canvas space
+            for(int coord_index = 0; coord_index < x_list.size(); ++ coord_index) {
+                xs[coord_index] = (int)((x_list.get(coord_index) - frame.x) * (double)WIDTH / frame.width);
+                ys[coord_index] = (int)((y_list.get(coord_index) - frame.y) * (double)HEIGHT / frame.height);
+            }
+
+            // draw
+            gfx.fillPolygon(xs, ys, x_list.size());
         }
     }
 
