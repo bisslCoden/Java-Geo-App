@@ -70,8 +70,6 @@ public class MapRenderer {
         put("water", new Info(null, color_water));
     }};
 
-
-
     static ByteString getTile(Integer x, Integer y, Integer z, List<String> layers, MapData data) {
         MapLogger.backendLogMapRequest(x, y, z, layers);
         System.out.print("[MapRenderer]: started rendering tile...");
@@ -91,14 +89,13 @@ public class MapRenderer {
             RenderLayer(frame, layers.get(index), gfx, data, entities);
         }
 
-
         // write image to buffer in portable network graphic format
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try {
             ImageIO.write(image, "png", buffer);
 
-            // debug code TODO: disable
-            ImageIO.write(image, "png", new File("data/tile_debug_render.png"));
+            // debug code
+            //ImageIO.write(image, "png", new File("data/tile_debug_render.png"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -121,6 +118,7 @@ public class MapRenderer {
             if(!amenity.tags.containsValue(layer)) continue;
             if(!data.isInside(frame, amenity.geom)) continue;
 
+            entities.add(amenity.id);
             renderGeometry(amenity.geom, frame, gfx);
         }
 
@@ -128,6 +126,7 @@ public class MapRenderer {
             if(!road.tags.containsValue(layer)) continue;
             if(!data.isInside(frame, road.geom)) continue;
 
+            entities.add(road.id);
             renderGeometry(road.geom, frame, gfx);
         }
 
@@ -135,6 +134,7 @@ public class MapRenderer {
             if(!other.tags.containsValue(layer)) continue;
             if(!data.isInside(frame, other.geom)) continue;
 
+            entities.add(other.id);
             renderGeometry(other.geom, frame, gfx);
         }
     }
@@ -206,10 +206,10 @@ public class MapRenderer {
                 Coordinate c1 = new Coordinate(coord_list.get(coord_index + 1));
 
                 // translate & scale to canvas space
-                c0.x = (c0.x - frame.x) * 512 / frame.width;
-                c0.y = (c0.y - frame.y) * 512 / frame.height;
-                c1.x = (c1.x - frame.x) * 512 / frame.width;
-                c1.y = (c1.y - frame.y) * 512 / frame.height;
+                c0.x = (c0.x - frame.x) * WIDTH / frame.width;
+                c0.y = (c0.y - frame.y) * HEIGHT / frame.height;
+                c1.x = (c1.x - frame.x) * WIDTH / frame.width;
+                c1.y = (c1.y - frame.y) * HEIGHT / frame.height;
 
                 // draw
                 gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
