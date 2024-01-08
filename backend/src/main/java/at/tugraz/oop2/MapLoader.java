@@ -1,19 +1,18 @@
 package at.tugraz.oop2;
 ;
+import org.checkerframework.checker.units.qual.C;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.basic.BasicGraphBuilder;
 import org.geotools.graph.path.AStarShortestPathFinder;
 import org.geotools.graph.structure.Graph;
 //import org.geotools.graph.structure.Node;
 import org.geotools.graph.traverse.standard.AStarIterator;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.Attributes;
@@ -235,33 +234,53 @@ public class MapLoader {
     }
     private static void assemble(List<Way> ways, List<Node> nodes, List<Relation> relations, List<Road> roads, List<Amenity> amenities, List<MapObject> others) {//        // find amenities in ways
         System.out.print("[MapLoader]: started assembly...");
-        for(Way way : ways) {
-            if (way.tags.containsKey("amenity"))
-                amenities.add(constructAmenity(way, ways, nodes, relations));
-            else if (way.tags.containsKey("highway")) {
-                Road road = constructRoad(way, ways, nodes, relations);
-                if (road.geom != null)
-                    roads.add(road);
-            }
-            else
-                others.add(constructMapObject(way, ways, nodes, relations));
 
-        }
-
-        // find amenities in nodes
+        // filter nodes
         for(Node node : nodes) {
-            if (node.tags.containsKey("amenity"))
-                amenities.add(constructAmenity(node, ways, nodes, relations));
-            else
-                others.add(constructMapObject(node, ways, nodes, relations));
+            if(node.tags.containsKey("amenity")) { // treat node as amenity
+                Amenity amenity = constructAmenity(node, ways, nodes, relations);
+                if(amenity.geom != null) amenities.add(amenity);
+            }
+            else if(node.tags.containsKey("highway")) { // treat node as road
+                Road road = constructRoad(node, ways, nodes, relations);
+                if(road.geom != null) roads.add(road);
+            }
+            else { // treat node as other
+                MapObject other = constructMapObject(node, ways, nodes, relations);
+                if(other.geom != null) others.add(other);
+            }
         }
 
-        // find amenities in relations
+        // filter ways
+        for(Way way : ways) {
+            if(way.tags.containsKey("amenity")) { // treat node as amenity
+                Amenity amenity = constructAmenity(way, ways, nodes, relations);
+                if(amenity.geom != null) amenities.add(amenity);
+            }
+            else if(way.tags.containsKey("highway")) { // treat node as road
+                Road road = constructRoad(way, ways, nodes, relations);
+                if(road.geom != null) roads.add(road);
+            }
+            else { // treat node as other
+                MapObject other = constructMapObject(way, ways, nodes, relations);
+                if(other.geom != null) others.add(other);
+            }
+        }
+
+        // filter relations
         for(Relation relation : relations) {
-            if(relation.tags.containsKey("amenity"))
-                amenities.add(constructAmenity(relation, ways, nodes, relations));
-            else
-                others.add(constructMapObject(relation, ways, nodes, relations));
+            if(relation.tags.containsKey("amenity")) { // treat node as amenity
+                Amenity amenity = constructAmenity(relation, ways, nodes, relations);
+                if(amenity.geom != null) amenities.add(amenity);
+            }
+            else if(relation.tags.containsKey("highway")) { // treat node as road
+                Road road = constructRoad(relation, ways, nodes, relations);
+                if(road.geom != null) roads.add(road);
+            }
+            else { // treat node as other
+                MapObject other = constructMapObject(relation, ways, nodes, relations);
+                if(other.geom != null) others.add(other);
+            }
         }
 
         System.out.println(" Done!");
@@ -295,6 +314,68 @@ public class MapLoader {
                 constructGeometry(relation, ways, nodes, relations)
         );
     }
+
+    private static Road constructRoad(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+        return new Road(
+                way.id,
+                way.tags.getOrDefault("name", ""),
+                way.tags,
+                way.tags.getOrDefault("highway", ""),
+                constructGeometry(way, ways, nodes, relations),
+                (ArrayList<Long>)way.references
+        );
+    }
+
+    private static Road constructRoad(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+        return new Road(
+                node.id,
+                node.tags.getOrDefault("name", ""),
+                node.tags,
+                node.tags.getOrDefault("highway", ""),
+                constructGeometry(node, ways, nodes, relations),
+                new ArrayList<>()
+        );
+    };
+    private static Road constructRoad(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations)
+    {
+        return new Road(
+                relation.id,
+                relation.tags.getOrDefault("name", ""),
+                relation.tags,
+                relation.tags.getOrDefault("highway", ""),
+                constructGeometry(relation, ways, nodes, relations),
+                new ArrayList<>()
+        );
+    }
+
+    private static MapObject constructMapObject(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+        return new MapObject(
+                way.id,
+                way.tags.getOrDefault("name", ""),
+                way.tags.getOrDefault("highway", ""),
+                way.tags,
+                constructGeometry(way, ways, nodes, relations)
+        );
+    }
+    private static MapObject constructMapObject(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+        return new MapObject(
+                node.id,
+                node.tags.getOrDefault("name", ""),
+                node.tags.getOrDefault("highway", ""),
+                node.tags,
+                constructGeometry(node, ways, nodes, relations)
+        );
+    }
+    private static MapObject constructMapObject(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+        return new MapObject(
+                relation.id,
+                relation.tags.getOrDefault("name", ""),
+                relation.tags.getOrDefault("highway", ""),
+                relation.tags,
+                constructGeometry(relation, ways, nodes, relations)
+        );
+    }
+
     private static Geometry constructGeometry(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         List<Coordinate> coordinates = getCoordinates(way, nodes);
         if(coordinates == null) return null;
@@ -312,62 +393,90 @@ public class MapLoader {
     }
     private static Geometry constructGeometry(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
         List<Geometry> geometries = new ArrayList<>();
-        List<Relation.Member> temp = new ArrayList<>();
-        temp.addAll(relation.members);
 
-        if(relation.tags.containsValue("multipolygon")) { // multipolygon
-            List<Geometry> multis = new ArrayList<>();
-            List<Polygon> inners = new ArrayList<>();
-            Polygon outer = null;
+        if(relation.tags.containsValue("multipolygon")) {
+            Polygon outer_polygon = null;
+            List<Geometry> multi_polygons = new ArrayList<>();
+            List<Geometry> inner_polygons = new ArrayList<>();
+            for (int member_index = 0; member_index < relation.members.size(); ) {
+                // handle relations
+                if (relation.members.get(member_index).type.equals("relation")) {
+                    ++member_index;
 
-            for(int index = 0; index < relation.members.size();) {
-                Circle circle = getNext(index, relation.members, ways, nodes);
-                if(circle == null) { ++index; continue; }
-
-                // handle found polygon
-                if(circle.role.equals("outer")) {
-                    if(outer != null) {
-                        inners.add(0, outer);
-                        multis.add(new GeometryFactory().createMultiPolygon(inners.toArray(new Polygon[0])));
-                        inners.clear();
+                    Integer relation_id = relationLookup.getOrDefault(relation.members.get(member_index - 1), null);
+                    if (relation_id == null) continue;
+                    Geometry collection = constructGeometry(relations.get(relation_id), ways, nodes, relations);
+                    for (int collection_index = 0; collection_index < collection.getNumGeometries(); ++collection_index) {
+                        geometries.add(collection.getGeometryN(collection_index));
                     }
-                    outer = circle.polygon;
                 }
-                else if(circle.role.equals("inner")) {
-                    inners.add(circle.polygon);
+                // handle ways
+                else if (relation.members.get(member_index).type.equals("way")) {
+                    // get polygon
+                    Circle circle = getNext(member_index, relation.members, ways, nodes);
+                    if (circle == null) {
+                        ++member_index;
+                        continue;
+                    }
+
+                    // handle outer
+                    if (circle.role.equals("outer")) {
+                        if (outer_polygon != null) {
+                            inner_polygons.add(0, outer_polygon);
+                            multi_polygons.add(
+                                    new GeometryFactory().createMultiPolygon(
+                                            inner_polygons.toArray(new Polygon[0])
+                                    ));
+                            inner_polygons.clear();
+                        }
+                        outer_polygon = circle.polygon;
+                    }
+                    // handle inner
+                    else if (circle.role.equals("inner")) {
+                        inner_polygons.add(circle.polygon);
+                    }
+                    // handle invalid
+                    else {
+                        System.out.println("Something went wrong: Invalid member role!");
+                        System.exit(0);
+                    }
+
+                    // advance
+                    member_index = circle.index;
                 }
-                else { // TODO: don't handle....
-                    System.out.println("Something went wrong: Invalid role!");
-                    System.exit(-1);
+                // handle invalid
+                else {
+                    System.out.println("Something went wrong: Invalid member type!");
+                    System.exit(0);
                 }
-                index = circle.index;
             }
 
-            if(outer != null) {
-                inners.add(0, outer);
-                multis.add(new GeometryFactory().createMultiPolygon(inners.toArray(new Polygon[0])));
+            if(outer_polygon != null) {
+                inner_polygons.add(0, outer_polygon);
+                multi_polygons.add(new GeometryFactory().createMultiPolygon(inner_polygons.toArray(new Polygon[0])));
             }
 
-            geometries.addAll(multis);
+            geometries.addAll(multi_polygons);
         }
-        else { // geometry collection
+        else {
             for(Relation.Member member : relation.members) { // construct geometry from way
                 if(member.type.equals("way")) {
-                    Way item = ways.get(wayLookup.get(member.reference));
-                    geometries.add(constructGeometry(item, ways, nodes, relations));
+                    Integer way_id = wayLookup.getOrDefault(member.reference, null);
+                    if(way_id == null) continue; // none existing way
+                    geometries.add(constructGeometry(ways.get(way_id), ways, nodes, relations));
                 }
                 else if(member.type.equals("relation")) { // recursive generate geom from relation
-                    Relation item = relations.get(relationLookup.get(member.reference));
-                    geometries.add(constructGeometry(item, ways, nodes, relations));
+                    Integer relation_id = relationLookup.getOrDefault(member.reference, null);
+                    if(relation_id == null) continue; // none existing relation
+                    geometries.add(constructGeometry(relations.get(relation_id), ways, nodes, relations));
                 }
                 else { // invalid state should never be reached
-                    System.out.println("Something went wrong!");
-                    System.exit(-1);
+                    System.out.println("Something went wrong: invalid member type!");
+                    System.exit(0);
                 }
             }
         }
 
-        relation.members = temp;
         return new GeometryFactory().createGeometryCollection(geometries.toArray(new Geometry[0]));
     }
 
@@ -397,107 +506,50 @@ public class MapLoader {
     }
 
     private static Circle getNext(int index, List<Relation.Member> members, List<Way> ways, List<Node> nodes) {
-        List<Relation.Member> pool = members.subList(index, members.size());
+        List<Long> polygon = new ArrayList<>();
         Circle circle = new Circle();
-        circle.index = index;
-        int size = pool.size();
 
-        // set role
-        circle.role = pool.get(0).role;
+        for(int member_index = index; index < members.size(); ++index) {
+            // get way of member
+            if(members.get(member_index).type.equals("relation")) continue; // TODO: handle
+            Integer way_id = wayLookup.getOrDefault(members.get(member_index).reference, null);
+            if(way_id == null) return null;
+            Way way = ways.get(way_id);
 
-        List<Long> references = new ArrayList<>();
-        Integer id = wayLookup.getOrDefault(pool.get(0).reference, null);
-        if(id == null) return null;
-        references.addAll(ways.get(id).references);
-
-        for(int outer = 0; outer < size; ++outer) {
-            for(int inner = pool.size() - 1; inner >= 0; --inner) {
-                if(!pool.get(inner).role.equals((circle.role))) continue; // exclude items with wrong role
-                if(pool.get(inner).type.equals("relation")) continue; // exclude relations TODO: fix
-
-                // try to attach
-                id = wayLookup.getOrDefault(pool.get(inner).reference, null);
-                if(id == null) return null;
-                Way way = ways.get(id);
-                Long con = references.get(references.size() - 1);
+            // try to link
+            if(polygon.size() == 0) { // attach first element
+                circle.index = member_index;
+                circle.role = members.get(member_index).role;
+            }
+            else {
+                Long con = polygon.get(polygon.size() - 1);
                 Long beg = way.references.get(0);
-                Long end = way.references.get((way.references.size() - 1));
+                Long end = way.references.get(way.references.size() - 1);
 
-                if(con.equals(beg)) { // normal link
-                }
-                else if (con.equals(end)){ // reverse link
+                if(con.equals(beg)) { } // normal link
+                else if(con.equals(end)) { // reverse link
                     Collections.reverse(way.references);
                 }
-                else continue;
+                else return null; // cannot link next member
+            }
 
-                // set index
-                int newIndex = members.indexOf(pool.get(inner));
-                if(newIndex > circle.index) {
-                    circle.index = newIndex;
-                }
+            polygon.addAll(way.references);
+            circle.index++;
 
-                references.remove(references.size() - 1); // remove doubles
-                references.addAll(way.references);
-                pool.remove(inner);
+            // check for completed polygon
+            Long beg = polygon.get(0);
+            Long end = polygon.get(polygon.size() - 1);
 
-                if(references.get(0).equals(references.get(references.size() - 1))) {
-                    List<Coordinate> coordinates = getCoordinates(references, nodes);
-                    circle.polygon = new GeometryFactory().createPolygon(coordinates.toArray(new Coordinate[0]));
-                    return circle;
-                }
+            if(beg.equals(end)) {
+                List<Coordinate> coordinates = getCoordinates(polygon, nodes);
+                circle.polygon = new GeometryFactory().createPolygon(coordinates.toArray(new Coordinate[0]));
+                return circle;
             }
         }
 
         return null;
     }
 
-    private static Road constructRoad(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
-        Road result = new Road(
-                way.id,
-                way.tags.getOrDefault("name", ""),
-                way.tags,
-                way.tags.getOrDefault("highway", ""),
-                constructGeometry(way, ways, nodes, relations),
-                (ArrayList<Long>)way.references
-        );
-
-        return result;
-    }
-
-
-    private static MapObject constructMapObject(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
-        MapObject result = new MapObject(
-                way.id,
-                way.tags.getOrDefault("name", ""),
-                way.tags.getOrDefault("highway", ""),
-                way.tags,
-                constructGeometry(way, ways, nodes, relations)
-        );
-
-        return result;
-    }
-    private static MapObject constructMapObject(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
-        MapObject result = new MapObject(
-                node.id,
-                node.tags.getOrDefault("name", ""),
-                node.tags.getOrDefault("highway", ""),
-                node.tags,
-                constructGeometry(node, ways, nodes, relations)
-        );
-
-        return result;
-    }
-    private static MapObject constructMapObject(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
-        MapObject result = new MapObject(
-                relation.id,
-                relation.tags.getOrDefault("name", ""),
-                relation.tags.getOrDefault("highway", ""),
-                relation.tags,
-                constructGeometry(relation, ways, nodes, relations)
-        );
-
-        return result;
-    }
 
     private static void link(List<Way> ways, List<Node> nodes, Graph network) {
 //        GraphBuilder builder = new BasicGraphBuilder();
