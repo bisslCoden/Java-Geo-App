@@ -1,16 +1,13 @@
 package at.tugraz.oop2;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.geotools.graph.build.GraphBuilder;
-import org.geotools.graph.build.GraphGenerator;
 import org.geotools.graph.build.basic.BasicGraphBuilder;
-import org.geotools.graph.build.basic.BasicGraphGenerator;
-import org.geotools.graph.build.line.BasicLineGraphGenerator;
-import org.geotools.graph.build.line.LineGraphGenerator;
+import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
+import org.geotools.graph.structure.Graphable;
 import org.geotools.graph.structure.Node;
-import org.geotools.graph.structure.line.XYNode;
-import org.hsqldb.lib.HsqlArrayHeap;
+import org.geotools.graph.structure.basic.BasicEdge;
+import org.geotools.graph.structure.line.BasicXYNode;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.referencing.operation.MathTransform;
@@ -22,14 +19,13 @@ import org.locationtech.jts.geom.Geometry;
 
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.springframework.aop.target.HotSwappableTargetSource;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 
 import java.util.*;
-import java.util.Map;
+
+import static java.util.Arrays.copyOfRange;
 
 public class MapData {
     public MapData() {}
@@ -135,7 +131,149 @@ public class MapData {
     }
 
     public Route getRoute(Long from, Long to, boolean weighting) {
-        // TODO: implement
+        // TODO: implement add check for unavailable ids add weighting to roads
+
+        List<Long> nodes = new ArrayList<>();
+        List<Road> roads = new ArrayList<>();
+
+
+        GraphBuilder builder = new BasicGraphBuilder();
+
+        boolean from_found = false;
+        boolean to_found = false;
+        for(Road r :_roads)
+        {
+            if(Objects.equals(r.child_ids.get(0), from) ||Objects.equals(r.child_ids.get(-1), from))
+            {
+                from_found = true;
+            }
+            if(Objects.equals(r.child_ids.get(0), to) ||Objects.equals(r.child_ids.get(-1), to))
+            {
+                to_found = true;
+            }
+            if(!(from_found && to_found))
+            {
+                throw new RuntimeException("404");
+            }
+
+        }
+
+        nodes.add(from);
+        Node f = new BasicXYNode();
+        try {
+            f.setID(Math.toIntExact(from));
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+        builder.addNode(f);
+
+        nodes.add(to);
+        Node t = new BasicXYNode();
+        try {
+            t.setID(Math.toIntExact(from));
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+        builder.addNode(t);
+
+
+        List<Long> nodes_slice = nodes.subList(0, 1);
+        int last_end = 1;
+
+        Collection<Node> builder_nodes = builder.getGraph().getNodes();
+
+        boolean modification = true;
+        while(modification)
+        {
+            modification = false;
+            for(Long n : nodes_slice)
+            {
+                for(Road r : _roads)
+                {
+                    if(!Objects.equals(r.type, "highway")) continue;
+                    if (Objects.equals(r.child_ids.get(0), n) || Objects.equals(r.child_ids.get(-1), n))
+                    {
+                        Node a = null;
+                        if(!nodes.contains(r.child_ids.get(0)))
+                        {
+                            nodes.add(r.child_ids.get(0));
+                            a = new BasicXYNode();
+                            try {
+                                a.setID(Math.toIntExact(from));
+                            }
+                            catch (Exception e)
+                            {
+                                System.out.println(e.getMessage());
+                            }
+                            builder.addNode(a);
+                        }
+
+                        Node b = null;
+                        if(!nodes.contains(r.child_ids.get(-1)))
+                        {
+                            nodes.add(r.child_ids.get(-1));
+                            b = new BasicXYNode();
+                            try {
+                                b.setID(Math.toIntExact(from));
+                            }
+                            catch (Exception e)
+                            {
+                                System.out.println(e.getMessage());
+                            }
+                            builder.addNode(b);
+                        }
+                        if((a == null && !builder_nodes.contains(a) || b == null && !builder_nodes.contains(b)))
+                        {
+                            builder_nodes = builder.getGraph().getNodes();
+                        }
+                        if(a == null)
+                        {
+                            for(Node find_node : builder_nodes)
+                            {
+                                if(Objects.equals(find_node.getID(), Math.toIntExact(r.child_ids.get(0))))
+                                {
+                                    a = find_node;
+                                    break;
+                                }
+                            }
+                        }
+                        if(b == null)
+                        {
+                            for(Node find_node : builder_nodes)
+                            {
+                                if(Objects.equals(find_node.getID(), Math.toIntExact(r.child_ids.get(-1))))
+                                {
+                                    b = find_node;
+                                    break;
+                                }
+                            }
+                        }
+
+                        Edge e = new BasicEdge(a, b);
+                        try {
+                            e.setID(Math.toIntExact(from));
+                        }
+                        catch (Exception ex)
+                        {
+                            System.out.println(ex.getMessage());
+                        }
+
+                        roads.add(r);
+                        builder.addEdge(e);
+
+                        modification = true;
+                    }
+                }
+            }
+            nodes_slice = nodes.subList(last_end, nodes.size()-1);
+            last_end = nodes.size()-1;
+        }
+
+
         Road[] resp = new Road[1];
         resp[0] = _roads.get(0);
         return new Route(200.0, 200.0, resp);
