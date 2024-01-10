@@ -147,8 +147,6 @@ public class MapData {
     }
 
     public Usages getUsage(Rectangle2D.Double frame) {
-        System.out.println("Frame: " + frame.x + ","+frame.y+","+(frame.x+frame.width)+","+(frame.y+frame.height));
-        // TODO: fix
         // transform frame
         Geometry frame_geom = new GeometryFactory().createPolygon(new Coordinate[] {
                 new Coordinate(frame.x, frame.y),
@@ -157,38 +155,40 @@ public class MapData {
                 new Coordinate(frame.x, frame.y + frame.height),
                 new Coordinate(frame.x, frame.y),
         });
-        Geometry frame_trans = null;
         try {
-            frame_trans = JTS.transform(frame_geom, _transform);
+            frame_geom = JTS.transform(frame_geom, _transform);
         } catch (TransformException e) {
             throw new RuntimeException(e);
         }
 
         // calculate areas
         HashMap<String, Double> shares = new HashMap<>();
-        Double usage = frame_trans.getArea();
+        Double usage = frame_geom.getArea();
+        List<MapObject> objects = new ArrayList<>();
 
-        // search in map objects
+        for(Amenity amenity : _amenities) {
+            if(!amenity.tags.containsKey("landuse")) continue;
+            if(!isInside(frame, amenity.geom)) continue;
+            objects.add(amenity);
+        }
+        for(Road road : _roads) {
+            if(!road.tags.containsKey("landuse")) continue;
+            if(!isInside(frame, road.geom)) continue;
+            objects.add(road);
+        }
         for(MapObject other : _others) {
-            String key = other.tags.getOrDefault("landuse", null);
-            if(key == null) continue;
+            if(!other.tags.containsKey("landuse")) continue;
             if(!isInside(frame, other.geom)) continue;
+            objects.add(other);
+        }
+
+        for(MapObject object : objects) {
+            // get or create area entry in map
+            String key = object.tags.get("landuse");
             Double value = shares.getOrDefault(key, 0.0);
 
-            if(!other.geom.getGeometryType().equals("Polygon")) continue;
-            Geometry target = other.geom;
-            Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
-            target = JTS.toGeometry(bbox).intersection(target);
-
-            try {
-                target = JTS.transform(target, _transform);
-            } catch (TransformException e) {
-                throw new RuntimeException(e);
-            }
-
-
-            Double area = target.getArea();
-            value += area;
+            // get area
+            value += getArea(object.geom, frame);
             shares.put(key, value);
         }
 
@@ -206,8 +206,34 @@ public class MapData {
                 return Double.compare(u1.share, u2.share);
             }
         });
+
         if(usages.size() == 0) return null;
         return new Usages(usage, usages.toArray(new Usage[0]));
+    }
+
+    private double getArea(Geometry geom, Rectangle2D.Double frame) {
+        double value = 0.0;
+
+        if(!geom.getGeometryType().equals("Polygon")) {
+            for(int index = 0; index < geom.getNumGeometries(); ++index) {
+                value += geom.getGeometryN(index).getArea();
+            }
+            return value;
+        }
+
+        // check bounding box
+        Geometry target = new GeometryFactory().createGeometry(geom);
+        Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
+        target = JTS.toGeometry(bbox).intersection(target);
+
+        // transform geometry to target
+        try {
+            target = JTS.transform(target, _transform);
+        } catch (TransformException e) {
+            throw new RuntimeException(e);
+        }
+        // search in map objects
+        return target.getArea();
     }
 
 
