@@ -24,6 +24,7 @@ import org.locationtech.jts.geom.Geometry;
 
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
+import org.springframework.http.HttpStatus;
 
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
@@ -140,16 +141,31 @@ public class MapData {
 
     public Route getRoute(Long from, Long to, boolean weighting) {
 
+        if(from == null || to == null)
+        {
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Missing parameter");
+        }
+
         List<Long> nodes = new ArrayList<>();
         List<Road> roads = new ArrayList<>();
+
+        class builderNode extends BasicXYNode{
+            long myID = 0;
+            public builderNode(long id){
+                super();
+                myID = id;
+            }
+        }
 
         class builderEdge extends BasicEdge {
             double weight_len = 0;
             double weight_time = 0;
+            long myID = 0;
 
-            public builderEdge(Node a, Node b, double w, String speed)
+            public builderEdge(long id, Node a, Node b, double w, String speed)
             {
                 super(a, b);
+                myID = id;
                 weight_len = w;
                 try
                 {
@@ -192,7 +208,7 @@ public class MapData {
         }
         if(!(from_found && to_found))
         {
-            return null;
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid parameter");
         }
 
         if(Objects.equals(from, to))
@@ -201,141 +217,93 @@ public class MapData {
         }
 
         nodes.add(from);
-        Node f = new BasicXYNode();
-        try {
-            f.setID(Math.toIntExact(from));
-        }
-        catch (Exception e)
-        {
-            System.out.println(e.getMessage());
-        }
+        builderNode f = new builderNode(from);
         builder.addNode(f);
 
         nodes.add(to);
-        Node t = new BasicXYNode();
-        try {
-            t.setID(Math.toIntExact(from));
-        }
-        catch (Exception e)
-        {
-            System.out.println(e.getMessage());
-        }
+        builderNode t = new builderNode(to);
         builder.addNode(t);
 
 
-        List<Long> nodes_slice = nodes.subList(0, 1);
-        int last_end = 1;
+        List<Long> nodes_added = new ArrayList<>();
 
         Collection<Node> builder_nodes = builder.getGraph().getNodes();
 
-        boolean modification = true;
-        while(modification)
+
+        for(Long n : nodes)
         {
-            modification = false;
-            for(Long n : nodes_slice)
+            for(Road r : _roads)
             {
-                for(Road r : _roads)
+                if(!r.tags.containsKey("highway") || roads.contains(r)) continue;
+                if(r.child_ids.size() < 2) continue;
+                if (Objects.equals((long)r.child_ids.get(0), n) || Objects.equals((long)r.child_ids.get(r.child_ids.size()-1), n))
                 {
-                    if(r.child_ids.size() < 2) continue;
-                    if(!Objects.equals(r.type, "highway") || roads.contains(r)) continue;
-                    if (Objects.equals(r.child_ids.get(0), n) || Objects.equals(r.child_ids.get(r.child_ids.size()-1), n))
+                    System.out.println(r.child_ids.get(0) + " " + r.child_ids.get(r.child_ids.size()-1));
+                    builderNode a = null;
+                    if(!nodes.contains(r.child_ids.get(0)))
                     {
-                        Node a = null;
-                        if(!nodes.contains(r.child_ids.get(0)))
-                        {
-                            nodes.add(r.child_ids.get(0));
-                            a = new BasicXYNode();
-                            try {
-                                a.setID(Math.toIntExact(from));
-                            }
-                            catch (Exception e)
-                            {
-                                System.out.println(e.getMessage());
-                            }
-                            builder.addNode(a);
-                        }
-
-                        Node b = null;
-                        if(!nodes.contains(r.child_ids.get(r.child_ids.size()-1)))
-                        {
-                            nodes.add(r.child_ids.get(r.child_ids.size()-1));
-                            b = new BasicXYNode();
-                            try {
-                                b.setID(Math.toIntExact(from));
-                            }
-                            catch (Exception e)
-                            {
-                                System.out.println(e.getMessage());
-                            }
-                            builder.addNode(b);
-                        }
-                        if((a == null && !builder_nodes.contains(a) || b == null && !builder_nodes.contains(b)))
-                        {
-                            builder_nodes = builder.getGraph().getNodes();
-                        }
-                        if(a == null)
-                        {
-                            for(Node find_node : builder_nodes)
-                            {
-                                if(Objects.equals(find_node.getID(), Math.toIntExact(r.child_ids.get(0))))
-                                {
-                                    a = find_node;
-                                    break;
-                                }
-                            }
-                        }
-                        if(b == null)
-                        {
-                            for(Node find_node : builder_nodes)
-                            {
-                                if(Objects.equals(find_node.getID(), Math.toIntExact(r.child_ids.get(r.child_ids.size()-1))))
-                                {
-                                    b = find_node;
-                                    break;
-                                }
-                            }
-                        }
-
-                        GeodeticCalculator calc = new GeodeticCalculator();
-
-
-                        double weight = 0;
-                        Coordinate[] coordinates = r.geom.getCoordinates();
-                        Coordinate last = new Coordinate(0, 0);
-                        for(Coordinate c : coordinates)
-                        {
-                            if(last.x == 0 && last.y == 0)
-                            {
-                                last = c;
-                                continue;
-                            }
-
-                            calc.setStartingGeographicPoint(last.x, last.y);
-                            calc.setDestinationGeographicPoint(c.y, c.y);
-
-
-                            weight += calc.getOrthodromicDistance();
-                            last = c;
-                        }
-                        String speed = r.tags.get("maxspeed");
-                        Edge e = new builderEdge(a, b, weight, speed);
-                        try {
-                            e.setID(Math.toIntExact(from));
-                        }
-                        catch (Exception ex)
-                        {
-                            System.out.println(ex.getMessage());
-                        }
-
-                        roads.add(r);
-                        builder.addEdge(e);
-
-                        modification = true;
+                        nodes.add(r.child_ids.get(0));
+                        a = new builderNode(r.child_ids.get(0));
+                        builder.addNode(a);
                     }
+                    builderNode b = null;
+                    if(!nodes.contains(r.child_ids.get(r.child_ids.size()-1)))
+                    {
+                        nodes.add(r.child_ids.get(r.child_ids.size()-1));
+                        b = new builderNode(r.child_ids.get(r.child_ids.size()-1));
+                        builder.addNode(b);
+                    }
+                    if((a == null && !nodes.contains(r.child_ids.get(0)) || b == null && !nodes.contains(r.child_ids.get(r.child_ids.size()-1))))
+                    {
+                        builder_nodes = builder.getGraph().getNodes();
+                    }
+                    if(a == null)
+                    {
+                        for(Node find_node : builder_nodes)
+                        {
+                            if(Objects.equals(((builderNode)find_node).myID, r.child_ids.get(0)))
+                            {
+                                a = (builderNode) find_node;
+                                break;
+                            }
+                        }
+                    }
+                    if(b == null)
+                    {
+                        for(Node find_node : builder_nodes)
+                        {
+                            if(Objects.equals(((builderNode)find_node).myID, r.child_ids.get(r.child_ids.size()-1)))
+                            {
+                                b = (builderNode) find_node;
+                                break;
+                            }
+                        }
+                    }
+                    GeodeticCalculator calc = new GeodeticCalculator();
+                    double weight = 0;
+                    Coordinate[] coordinates = r.geom.getCoordinates();
+                    Coordinate last = new Coordinate(0, 0);
+                    for(Coordinate c : coordinates)
+                    {
+                        if(last.x == 0 && last.y == 0)
+                        {
+                            last = c;
+                            continue;
+                        }
+
+                        calc.setStartingGeographicPoint(last.x, last.y);
+                        calc.setDestinationGeographicPoint(c.y, c.y);
+
+                        weight += calc.getOrthodromicDistance();
+                        last = c;
+                    }
+                    String speed = r.tags.get("maxspeed");
+                    builderEdge e = new builderEdge(r.id, a, b, weight, speed);
+
+                    roads.add(r);
+                    builder.addEdge(e);
                 }
             }
-            nodes_slice = nodes.subList(last_end, nodes.size()-1);
-            last_end = nodes.size()-1;
         }
 
         class edgeWeighter implements DijkstraIterator.EdgeWeighter{
@@ -353,7 +321,7 @@ public class MapData {
         Path route = finder.getPath(f);
         if(route == null)
         {
-            throw new RuntimeException("400");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "No path found");
         }
         double length = 0;
         double time = 0;
@@ -362,7 +330,7 @@ public class MapData {
         {
             for(Road r : roads)
             {
-                if(e.getID() == r.id) resp.add(r);
+                if(((builderEdge)e).myID == r.id) resp.add(r);
                 length += ((builderEdge) e).weight_len;
                 time += ((builderEdge) e).weight_time;
 
