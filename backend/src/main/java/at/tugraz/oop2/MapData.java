@@ -180,6 +180,7 @@ public class MapData {
         boolean to_found = false;
         for(Road r :_roads)
         {
+            if(r.child_ids.size() < 2) continue;
             if(Objects.equals(r.child_ids.get(0), from) ||Objects.equals(r.child_ids.get(r.child_ids.size()-1), from))
             {
                 from_found = true;
@@ -235,6 +236,7 @@ public class MapData {
             {
                 for(Road r : _roads)
                 {
+                    if(r.child_ids.size() < 2) continue;
                     if(!Objects.equals(r.type, "highway") || roads.contains(r)) continue;
                     if (Objects.equals(r.child_ids.get(0), n) || Objects.equals(r.child_ids.get(r.child_ids.size()-1), n))
                     {
