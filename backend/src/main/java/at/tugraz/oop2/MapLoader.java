@@ -1,18 +1,17 @@
 package at.tugraz.oop2;
-;
-import org.checkerframework.checker.units.qual.C;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.basic.BasicGraphBuilder;
-import org.geotools.graph.path.AStarShortestPathFinder;
 import org.geotools.graph.structure.Graph;
 //import org.geotools.graph.structure.Node;
-import org.geotools.graph.traverse.standard.AStarIterator;
+import org.geotools.graph.structure.Node;
+import org.geotools.graph.structure.basic.BasicEdge;
+import org.geotools.graph.structure.line.BasicXYNode;
+import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.*;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.Attributes;
@@ -26,7 +25,7 @@ public class MapLoader {
         Long id;
         Map<String, String> tags = new HashMap<String, String>();
     };
-    static private class Node extends Base {
+    static private class RawNode extends Base {
         Double longitude; // x-coordinate
         Double latitude;  // y-coordinate
 
@@ -53,7 +52,7 @@ public class MapLoader {
 
     public static MapData load(String location) { // TODO: implement safety check
         List<Way> ways = new ArrayList<>();
-        List<Node> nodes = new ArrayList<>();
+        List<RawNode> nodes = new ArrayList<>();
         List<Relation> relations = new ArrayList<>();
 
         parse(location, ways, nodes, relations);
@@ -65,7 +64,7 @@ public class MapLoader {
         assemble(ways, nodes, relations, roads, amenities, others);
 
         Graph network = null;
-        link(ways, nodes, network);
+        network = link(roads, nodes);
 
         Set<Long> used_nodes = new HashSet<>();
         for(Way way : ways) {
@@ -88,7 +87,7 @@ public class MapLoader {
         return new MapData(roads, amenities, others, network);
     }
 
-    private static void parse(String location, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static void parse(String location, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         System.out.print("[MapLoader]: started parsing...");
         try {
             // setups
@@ -141,7 +140,7 @@ public class MapLoader {
                 // handlers
                 public void handleNode(Attributes attributes) {
                     // create new node object
-                    Node node = new Node();
+                    RawNode node = new RawNode();
                     element = ElementType.NODE;
                     // parse attributes
                     for(int index = 0; index < attributes.getLength(); ++index) {
@@ -232,11 +231,11 @@ public class MapLoader {
         }
         System.out.println(" Done!");
     }
-    private static void assemble(List<Way> ways, List<Node> nodes, List<Relation> relations, List<Road> roads, List<Amenity> amenities, List<MapObject> others) {//        // find amenities in ways
+    private static void assemble(List<Way> ways, List<RawNode> nodes, List<Relation> relations, List<Road> roads, List<Amenity> amenities, List<MapObject> others) {//        // find amenities in ways
         System.out.print("[MapLoader]: started assembly...");
 
         // filter nodes
-        for(Node node : nodes) {
+        for(RawNode node : nodes) {
             if(node.tags.containsKey("amenity")) { // treat node as amenity
                 Amenity amenity = constructAmenity(node, ways, nodes, relations);
                 if(amenity.geom != null) amenities.add(amenity);
@@ -287,7 +286,7 @@ public class MapLoader {
     }
 
     //TODO: implement in templates to avoid code duplication
-    private static Amenity constructAmenity(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Amenity constructAmenity(Way way, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new Amenity(
                 way.id,
                 way.tags.getOrDefault("name", ""),
@@ -296,7 +295,7 @@ public class MapLoader {
                 constructGeometry(way, ways, nodes, relations)
         );
     }
-    private static Amenity constructAmenity(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Amenity constructAmenity(RawNode node, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new Amenity(
                 node.id,
                 node.tags.getOrDefault("name", ""),
@@ -305,7 +304,7 @@ public class MapLoader {
                 constructGeometry(node, ways, nodes, relations)
         );
     }
-    private static Amenity constructAmenity(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Amenity constructAmenity(Relation relation, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new Amenity(
                 relation.id,
                 relation.tags.getOrDefault("name", ""),
@@ -315,7 +314,7 @@ public class MapLoader {
         );
     }
 
-    private static Road constructRoad(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Road constructRoad(Way way, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new Road(
                 way.id,
                 way.tags.getOrDefault("name", ""),
@@ -326,7 +325,7 @@ public class MapLoader {
         );
     }
 
-    private static Road constructRoad(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Road constructRoad(RawNode node, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new Road(
                 node.id,
                 node.tags.getOrDefault("name", ""),
@@ -336,7 +335,7 @@ public class MapLoader {
                 new ArrayList<>()
         );
     };
-    private static Road constructRoad(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations)
+    private static Road constructRoad(Relation relation, List<Way> ways, List<RawNode> nodes, List<Relation> relations)
     {
         return new Road(
                 relation.id,
@@ -348,7 +347,7 @@ public class MapLoader {
         );
     }
 
-    private static MapObject constructMapObject(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static MapObject constructMapObject(Way way, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new MapObject(
                 way.id,
                 way.tags.getOrDefault("name", ""),
@@ -357,7 +356,7 @@ public class MapLoader {
                 constructGeometry(way, ways, nodes, relations)
         );
     }
-    private static MapObject constructMapObject(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static MapObject constructMapObject(RawNode node, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new MapObject(
                 node.id,
                 node.tags.getOrDefault("name", ""),
@@ -366,7 +365,7 @@ public class MapLoader {
                 constructGeometry(node, ways, nodes, relations)
         );
     }
-    private static MapObject constructMapObject(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static MapObject constructMapObject(Relation relation, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new MapObject(
                 relation.id,
                 relation.tags.getOrDefault("name", ""),
@@ -376,7 +375,7 @@ public class MapLoader {
         );
     }
 
-    private static Geometry constructGeometry(Way way, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Geometry constructGeometry(Way way, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         List<Coordinate> coordinates = getCoordinates(way, nodes);
         if(coordinates == null) return null;
 
@@ -388,10 +387,10 @@ public class MapLoader {
         else // create line string
             return new GeometryFactory().createLineString(coordinates.toArray(new Coordinate[0]));
     }
-    private static Geometry constructGeometry(Node node, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Geometry constructGeometry(RawNode node, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         return new GeometryFactory().createPoint(new Coordinate(node.longitude, node.latitude));
     }
-    private static Geometry constructGeometry(Relation relation, List<Way> ways, List<Node> nodes, List<Relation> relations) {
+    private static Geometry constructGeometry(Relation relation, List<Way> ways, List<RawNode> nodes, List<Relation> relations) {
         List<Geometry> geometries = new ArrayList<>();
 
         if(relation.tags.containsValue("multipolygon")) {
@@ -480,32 +479,32 @@ public class MapLoader {
         return new GeometryFactory().createGeometryCollection(geometries.toArray(new Geometry[0]));
     }
 
-    private static List<Coordinate> getCoordinates(Way way, List<Node> nodes) {
+    private static List<Coordinate> getCoordinates(Way way, List<RawNode> nodes) {
         List<Coordinate> coordinates = new ArrayList<>();
 
         for(Long reference : way.references) {
             Integer nodeId = nodeLookup.getOrDefault(reference, null);
             if(nodeId == null) return null;
-            Node node = nodes.get(nodeId);
+            RawNode node = nodes.get(nodeId);
             coordinates.add(new Coordinate(node.longitude, node.latitude));
         }
 
         return coordinates;
     }
-    private static List<Coordinate> getCoordinates(List<Long> references, List<Node> nodes) {
+    private static List<Coordinate> getCoordinates(List<Long> references, List<RawNode> nodes) {
         List<Coordinate> coordinates = new ArrayList<>();
 
         for(Long reference : references) {
             Integer nodeId = nodeLookup.getOrDefault(reference, null);
             if(nodeId == null) return null;
-            Node node = nodes.get(nodeId);
+            RawNode node = nodes.get(nodeId);
             coordinates.add(new Coordinate(node.longitude, node.latitude));
         }
 
         return coordinates;
     }
 
-    private static Circle getNext(int index, List<Relation.Member> members, List<Way> ways, List<Node> nodes) {
+    private static Circle getNext(int index, List<Relation.Member> members, List<Way> ways, List<RawNode> nodes) {
         List<Long> polygon = new ArrayList<>();
         Circle circle = new Circle();
 
@@ -551,45 +550,71 @@ public class MapLoader {
     }
 
 
-    private static void link(List<Way> ways, List<Node> nodes, Graph network) {
-//        GraphBuilder builder = new BasicGraphBuilder();
-//        org.geotools.graph.structure.Node node =  builder.buildNode();
-//        node.setID((long) 034);
-//        node.set
-//        node.setNode();
-//
-//        // find shortest path
-//        Graph graph;
-//        Node start;
-//        Node destination;
-//
-//        // create a strategy for weighting edges in the graph
-//        // in this case we are using geometry length
-//
-//        AStarIterator.EdgeWeigter length_weighter = new AStarIterator.EdgeWeighter() {
-//            public double getWeight(Edge e) {
-//                SimpleFeature feature = (SimpleFeature) e.getObject();
-//                Geometry geometry = (Geometry) feature.getDefaultGeometry();
-//                return gometry.getLength();
-//            }
-//        };
-//        AStarIterator.EdgeWieghter time_weighter = new AStarIterator.EdgeWeighter() {
-//
-//        }
-//
-//
-//
-//        AStarShortestPathFinder pf = new AStarShortestPathFinder(graph, start, target, );
-//        pf.calculate();
-//
-//        //find some destinations to calculate paths to
-//
-//        //calculate the paths
-//        for ( Iterator d = destinations.iterator(); d.hasNext(); ) {
-//            Node destination = (Node) d.next();
-//            Path path = pf.getPath( destination );
-//
-//            //do something with the path
-//        }
+    private static Graph link(List<Road> roads, List<RawNode> nodes) {
+        GraphBuilder builder = new BasicGraphBuilder();
+        List<Long> geo_nodes = new ArrayList<>();
+        List<Road> geo_roads = new ArrayList<>();
+
+        Collection<Node> builder_nodes = builder.getGraph().getNodes();
+
+
+        for (Road r : roads) {
+            if (r.child_ids.size() < 2) continue;
+
+            MapData.builderNode a = null;
+            if (!geo_nodes.contains(r.child_ids.get(0))) {
+                geo_nodes.add(r.child_ids.get(0));
+                a = new MapData.builderNode(r.child_ids.get(0));
+                builder.addNode(a);
+            }
+            MapData.builderNode b = null;
+            if (!geo_nodes.contains(r.child_ids.get(r.child_ids.size() - 1))) {
+                geo_nodes.add(r.child_ids.get(r.child_ids.size() - 1));
+                b = new MapData.builderNode(r.child_ids.get(r.child_ids.size() - 1));
+                builder.addNode(b);
+            }
+            if ((a == null && !geo_nodes.contains(r.child_ids.get(0)) || b == null && !geo_nodes.contains(r.child_ids.get(r.child_ids.size() - 1)))) {
+                builder_nodes = builder.getGraph().getNodes();
+            }
+            if (a == null) {
+                for (Node find_node : builder_nodes) {
+                    if (Objects.equals(((MapData.builderNode) find_node).myID, r.child_ids.get(0))) {
+                        a = (MapData.builderNode) find_node;
+                        break;
+                    }
+                }
+            }
+            if (b == null) {
+                for (Node find_node : builder_nodes) {
+                    if (Objects.equals(((MapData.builderNode) find_node).myID, r.child_ids.get(r.child_ids.size() - 1))) {
+                        b = (MapData.builderNode) find_node;
+                        break;
+                    }
+                }
+            }
+            GeodeticCalculator calc = new GeodeticCalculator();
+            double weight = 0;
+            Coordinate[] coordinates = r.geom.getCoordinates();
+            Coordinate last = new Coordinate(0, 0);
+            for (Coordinate c : coordinates) {
+                if (last.x == 0 && last.y == 0)
+                {
+                    last = c;
+                    continue;
+                }
+
+                calc.setStartingGeographicPoint(last.x, last.y);
+                calc.setDestinationGeographicPoint(c.y, c.y);
+
+                weight += calc.getOrthodromicDistance();
+                last = c;
+            }
+            String speed = r.tags.getOrDefault("maxspeed", "30");
+            MapData.builderEdge e = new MapData.builderEdge(r.id, a, b, weight, speed);
+
+            geo_roads.add(r);
+            builder.addEdge(e);
+        }
+        return builder.getGraph();
     }
 }

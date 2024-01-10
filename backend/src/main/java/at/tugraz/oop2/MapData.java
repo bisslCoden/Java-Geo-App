@@ -30,7 +30,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 
 import java.util.*;
-import java.util.Map;
 
 public class MapData {
     public MapData() {}
@@ -139,74 +138,59 @@ public class MapData {
         return result.toArray(new Road[0]);
     }
 
+    static class builderNode extends BasicXYNode {
+        long myID;
+        public builderNode(long id){
+            super();
+            myID = id;
+        }
+    }
+
+    public static class builderEdge extends BasicEdge {
+        double weight_len;
+        double weight_time;
+        long myID;
+
+        public builderEdge(long id, Node a, Node b, double w, String speed)
+        {
+            super(a, b);
+            myID = id;
+            weight_len = w;
+
+            try
+            {
+                weight_time = Double.parseDouble(speed);
+            }
+            catch (NumberFormatException e)
+            {
+                // not a valid speed
+                weight_time = 30;
+            }
+            weight_len /= weight_time;
+        }
+        double getWeight(boolean len){
+            if(len) return weight_len;
+            return weight_time;
+        }
+    }
+
     public Route getRoute(Long from, Long to, boolean weighting) {
+
 
         if(from == null || to == null)
         {
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Missing parameter");
         }
 
-        List<Long> nodes = new ArrayList<>();
-        List<Road> roads = new ArrayList<>();
-
-        class builderNode extends BasicXYNode{
-            long myID = 0;
-            public builderNode(long id){
-                super();
-                myID = id;
-            }
-        }
-
-        class builderEdge extends BasicEdge {
-            double weight_len = 0;
-            double weight_time = 0;
-            long myID = 0;
-
-            public builderEdge(long id, Node a, Node b, double w, String speed)
-            {
-                super(a, b);
-                myID = id;
-                weight_len = w;
-                try
-                {
-                    weight_time = Double.parseDouble(speed);
-                }
-                catch (NullPointerException e)
-                {
-                    // key not found
-                    weight_time = 30;
-                }
-                catch (NumberFormatException e)
-                {
-                    // not a valid speed
-                    weight_time = 30;
-                }
-                weight_len /= weight_time;
-            }
-            double getWeight(boolean len){
-                if(len) return weight_len;
-                return weight_time;
-            }
-        }
-
-
-        GraphBuilder builder = new BasicGraphBuilder();
-
-        boolean from_found = false;
-        boolean to_found = false;
-        for(Road r :_roads)
+        Collection<Node> builder_nodes = _network.getNodes();
+        builderNode f = null;
+        builderNode t = null;
+        for(Node n : builder_nodes)
         {
-            if(r.child_ids.size() < 2) continue;
-            if(Objects.equals(r.child_ids.get(0), from) ||Objects.equals(r.child_ids.get(r.child_ids.size()-1), from))
-            {
-                from_found = true;
-            }
-            if(Objects.equals(r.child_ids.get(0), to) ||Objects.equals(r.child_ids.get(r.child_ids.size()-1), to))
-            {
-                to_found = true;
-            }
+            if(((builderNode)n).myID == from) f = (builderNode)n;
+            if(((builderNode)n).myID == to) t = (builderNode)n;
         }
-        if(!(from_found && to_found))
+        if(f == null || t == null)
         {
             throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid parameter");
         }
@@ -214,96 +198,6 @@ public class MapData {
         if(Objects.equals(from, to))
         {
             return new Route((double) 0, (double) 0, new Road[0]);
-        }
-
-        nodes.add(from);
-        builderNode f = new builderNode(from);
-        builder.addNode(f);
-
-        nodes.add(to);
-        builderNode t = new builderNode(to);
-        builder.addNode(t);
-
-
-        List<Long> nodes_added = new ArrayList<>();
-
-        Collection<Node> builder_nodes = builder.getGraph().getNodes();
-
-
-        for(Long n : nodes)
-        {
-            for(Road r : _roads)
-            {
-                if(!r.tags.containsKey("highway") || roads.contains(r)) continue;
-                if(r.child_ids.size() < 2) continue;
-                if (Objects.equals((long)r.child_ids.get(0), n) || Objects.equals((long)r.child_ids.get(r.child_ids.size()-1), n))
-                {
-                    System.out.println(r.child_ids.get(0) + " " + r.child_ids.get(r.child_ids.size()-1));
-                    builderNode a = null;
-                    if(!nodes.contains(r.child_ids.get(0)))
-                    {
-                        nodes.add(r.child_ids.get(0));
-                        a = new builderNode(r.child_ids.get(0));
-                        builder.addNode(a);
-                    }
-                    builderNode b = null;
-                    if(!nodes.contains(r.child_ids.get(r.child_ids.size()-1)))
-                    {
-                        nodes.add(r.child_ids.get(r.child_ids.size()-1));
-                        b = new builderNode(r.child_ids.get(r.child_ids.size()-1));
-                        builder.addNode(b);
-                    }
-                    if((a == null && !nodes.contains(r.child_ids.get(0)) || b == null && !nodes.contains(r.child_ids.get(r.child_ids.size()-1))))
-                    {
-                        builder_nodes = builder.getGraph().getNodes();
-                    }
-                    if(a == null)
-                    {
-                        for(Node find_node : builder_nodes)
-                        {
-                            if(Objects.equals(((builderNode)find_node).myID, r.child_ids.get(0)))
-                            {
-                                a = (builderNode) find_node;
-                                break;
-                            }
-                        }
-                    }
-                    if(b == null)
-                    {
-                        for(Node find_node : builder_nodes)
-                        {
-                            if(Objects.equals(((builderNode)find_node).myID, r.child_ids.get(r.child_ids.size()-1)))
-                            {
-                                b = (builderNode) find_node;
-                                break;
-                            }
-                        }
-                    }
-                    GeodeticCalculator calc = new GeodeticCalculator();
-                    double weight = 0;
-                    Coordinate[] coordinates = r.geom.getCoordinates();
-                    Coordinate last = new Coordinate(0, 0);
-                    for(Coordinate c : coordinates)
-                    {
-                        if(last.x == 0 && last.y == 0)
-                        {
-                            last = c;
-                            continue;
-                        }
-
-                        calc.setStartingGeographicPoint(last.x, last.y);
-                        calc.setDestinationGeographicPoint(c.y, c.y);
-
-                        weight += calc.getOrthodromicDistance();
-                        last = c;
-                    }
-                    String speed = r.tags.get("maxspeed");
-                    builderEdge e = new builderEdge(r.id, a, b, weight, speed);
-
-                    roads.add(r);
-                    builder.addEdge(e);
-                }
-            }
         }
 
         class edgeWeighter implements DijkstraIterator.EdgeWeighter{
@@ -317,7 +211,7 @@ public class MapData {
 
         edgeWeighter weighter = new edgeWeighter();
 
-        DijkstraShortestPathFinder finder = new DijkstraShortestPathFinder(builder.getGraph(), t, weighter);
+        DijkstraShortestPathFinder finder = new DijkstraShortestPathFinder(_network, t, weighter);
         Path route = finder.getPath(f);
         if(route == null)
         {
@@ -328,13 +222,11 @@ public class MapData {
         List<Road> resp = new ArrayList<>();
         for(Edge e : route.getEdges())
         {
-            for(Road r : roads)
-            {
-                if(((builderEdge)e).myID == r.id) resp.add(r);
-                length += ((builderEdge) e).weight_len;
-                time += ((builderEdge) e).weight_time;
+            Road r = getRoad(((builderEdge)e).myID);
+            resp.add(r);
+            length += ((builderEdge) e).weight_len;
+            time += ((builderEdge) e).weight_time;
 
-            }
         }
 
         return new Route(length, time, resp.toArray(new Road[0]));
