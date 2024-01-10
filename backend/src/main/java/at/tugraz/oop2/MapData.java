@@ -48,51 +48,59 @@ public class MapData {
     }
     public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
         MapLogger.backendLogAmenitiesRequest();
-        List<Amenity> result = new ArrayList<Amenity>();
+        List<Amenity> result = new ArrayList<>();
 
-        total[0] = 0L;
-        int skipped = 0, took = 0;
+        // find amenities
         for(Amenity amenity : _amenities) {
             // filter
             if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(frame, amenity.geom)) continue;
-            ++total[0];
 
-            // skip
-            if(skipped < skip) { ++skipped; continue; }
-
-            // take
-            if(took < take) {
-                result.add(amenity);
-                ++took;
-            }
+            // add
+            result.add(amenity);
         }
 
-        return result.toArray(new Amenity[0]);
+        // sort list
+        Collections.sort(result, new Comparator<Amenity>() {
+            @Override
+            public int compare(Amenity o1, Amenity o2) {
+                return Long.compare(o1.id, o2.id);
+            }
+        });
+
+        // skip, take and return
+        total[0] = (long)result.size();
+        int from = (int)Math.min(skip, result.size());
+        int to = from + (int)Math.min(take, result.size());
+        return result.subList(from, to).toArray(new Amenity[0]);
     }
     public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long[] total) {
         MapLogger.backendLogAmenitiesRequest();
         List<Amenity> result = new ArrayList<>();
 
-        total[0] = 0L;
-        int skipped = 0, took = 0;
+        // find amenities
         for(Amenity amenity : _amenities) {
             // filter
             if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(point, distance, amenity.geom)) continue;
-            ++total[0];
 
-            // skip
-            if(skipped < skip) { ++skipped; continue; }
-
-            // take
-            if(took < take) {
-                result.add(amenity);
-                ++took;
-            }
+            // add
+            result.add(amenity);
         }
 
-        return result.toArray(new Amenity[0]);
+        // sort list
+        Collections.sort(result, new Comparator<Amenity>() {
+            @Override
+            public int compare(Amenity o1, Amenity o2) {
+                return Long.compare(o1.id, o2.id);
+            }
+        });
+
+        // skip, take and return
+        total[0] = (long)result.size();
+        int from = (int)Math.min(skip, result.size());
+        int to = from + (int)Math.min(take, result.size());
+        return result.subList(from, to).toArray(new Amenity[0]);
     }
 
     public Road getRoad(Long id) {
@@ -102,28 +110,32 @@ public class MapData {
         return null;
     }
     public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
-        MapLogger.backendLogRoadsRequest();
-        List<Road> result = new ArrayList<Road>();
+        MapLogger.backendLogAmenitiesRequest();
+        List<Road> result = new ArrayList<>();
 
-        total[0] = 0L;
-        int skipped = 0, took = 0;
+        // find amenities
         for(Road road : _roads) {
             // filter
             if(!type.isEmpty() && !road.type.equals(type)) continue;
             if(!isInside(frame, road.geom)) continue;
-            ++total[0];
 
-            // skip
-            if(skipped < skip) { ++skipped; continue;}
-
-            // take
-            if(took < take) {
-                result.add(road);
-                ++took;
-            }
+            // add
+            result.add(road);
         }
 
-        return result.toArray(new Road[0]);
+        // sort list
+        Collections.sort(result, new Comparator<Road>() {
+            @Override
+            public int compare(Road o1, Road o2) {
+                return Long.compare(o1.id, o2.id);
+            }
+        });
+
+        // skip, take and return
+        total[0] = (long)result.size();
+        int from = (int)Math.min(skip, result.size());
+        int to = from + (int)Math.min(take, result.size());
+        return result.subList(from, to).toArray(new Road[0]);
     }
 
     public Route getRoute(Long from, Long to, boolean weighting) {
