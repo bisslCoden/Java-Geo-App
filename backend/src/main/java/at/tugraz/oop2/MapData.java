@@ -2,12 +2,15 @@ package at.tugraz.oop2;
 
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.basic.BasicGraphBuilder;
+import org.geotools.graph.path.DijkstraShortestPathFinder;
+import org.geotools.graph.path.Path;
 import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
-import org.geotools.graph.structure.Graphable;
 import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.basic.BasicEdge;
 import org.geotools.graph.structure.line.BasicXYNode;
+import org.geotools.graph.traverse.standard.DijkstraIterator;
+import org.geotools.referencing.GeodeticCalculator;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.referencing.operation.MathTransform;
@@ -25,7 +28,6 @@ import java.awt.geom.Point2D;
 
 import java.util.*;
 
-import static java.util.Arrays.copyOfRange;
 
 public class MapData {
     public MapData() {}
@@ -131,10 +133,39 @@ public class MapData {
     }
 
     public Route getRoute(Long from, Long to, boolean weighting) {
-        // TODO: implement add check for unavailable ids add weighting to roads
 
         List<Long> nodes = new ArrayList<>();
         List<Road> roads = new ArrayList<>();
+
+        class builderEdge extends BasicEdge{
+            double weight_len = 0;
+            double weight_time = 0;
+
+            public builderEdge(Node a, Node b, double w, String speed)
+            {
+                super(a, b);
+                weight_len = w;
+                try
+                {
+                    weight_time = Double.parseDouble(speed);
+                }
+                catch (NullPointerException e)
+                {
+                    // key not found
+                    weight_time = 30;
+                }
+                catch (NumberFormatException e)
+                {
+                    // not a valid speed
+                    weight_time = 30;
+                }
+                weight_len /= weight_time;
+            }
+            double getWeight(boolean len){
+                if(len) return weight_len;
+                return weight_time;
+            }
+        }
 
 
         GraphBuilder builder = new BasicGraphBuilder();
@@ -143,19 +174,23 @@ public class MapData {
         boolean to_found = false;
         for(Road r :_roads)
         {
-            if(Objects.equals(r.child_ids.get(0), from) ||Objects.equals(r.child_ids.get(-1), from))
+            if(Objects.equals(r.child_ids.get(0), from) ||Objects.equals(r.child_ids.get(r.child_ids.size()-1), from))
             {
                 from_found = true;
             }
-            if(Objects.equals(r.child_ids.get(0), to) ||Objects.equals(r.child_ids.get(-1), to))
+            if(Objects.equals(r.child_ids.get(0), to) ||Objects.equals(r.child_ids.get(r.child_ids.size()-1), to))
             {
                 to_found = true;
             }
-            if(!(from_found && to_found))
-            {
-                throw new RuntimeException("404");
-            }
+        }
+        if(!(from_found && to_found))
+        {
+            return null;
+        }
 
+        if(Objects.equals(from, to))
+        {
+            return new Route((double) 0, (double) 0, new Road[0]);
         }
 
         nodes.add(from);
@@ -194,8 +229,8 @@ public class MapData {
             {
                 for(Road r : _roads)
                 {
-                    if(!Objects.equals(r.type, "highway")) continue;
-                    if (Objects.equals(r.child_ids.get(0), n) || Objects.equals(r.child_ids.get(-1), n))
+                    if(!Objects.equals(r.type, "highway") || roads.contains(r)) continue;
+                    if (Objects.equals(r.child_ids.get(0), n) || Objects.equals(r.child_ids.get(r.child_ids.size()-1), n))
                     {
                         Node a = null;
                         if(!nodes.contains(r.child_ids.get(0)))
@@ -213,9 +248,9 @@ public class MapData {
                         }
 
                         Node b = null;
-                        if(!nodes.contains(r.child_ids.get(-1)))
+                        if(!nodes.contains(r.child_ids.get(r.child_ids.size()-1)))
                         {
-                            nodes.add(r.child_ids.get(-1));
+                            nodes.add(r.child_ids.get(r.child_ids.size()-1));
                             b = new BasicXYNode();
                             try {
                                 b.setID(Math.toIntExact(from));
@@ -245,7 +280,7 @@ public class MapData {
                         {
                             for(Node find_node : builder_nodes)
                             {
-                                if(Objects.equals(find_node.getID(), Math.toIntExact(r.child_ids.get(-1))))
+                                if(Objects.equals(find_node.getID(), Math.toIntExact(r.child_ids.get(r.child_ids.size()-1))))
                                 {
                                     b = find_node;
                                     break;
@@ -253,7 +288,29 @@ public class MapData {
                             }
                         }
 
-                        Edge e = new BasicEdge(a, b);
+                        GeodeticCalculator calc = new GeodeticCalculator();
+
+
+                        double weight = 0;
+                        Coordinate[] coordinates = r.geom.getCoordinates();
+                        Coordinate last = new Coordinate(0, 0);
+                        for(Coordinate c : coordinates)
+                        {
+                            if(last.x == 0 && last.y == 0)
+                            {
+                                last = c;
+                                continue;
+                            }
+
+                            calc.setStartingGeographicPoint(last.x, last.y);
+                            calc.setDestinationGeographicPoint(c.y, c.y);
+
+
+                            weight += calc.getOrthodromicDistance();
+                            last = c;
+                        }
+                        String speed = r.tags.get("maxspeed");
+                        Edge e = new builderEdge(a, b, weight, speed);
                         try {
                             e.setID(Math.toIntExact(from));
                         }
@@ -273,10 +330,38 @@ public class MapData {
             last_end = nodes.size()-1;
         }
 
+        class edgeWeighter implements DijkstraIterator.EdgeWeighter{
 
-        Road[] resp = new Road[1];
-        resp[0] = _roads.get(0);
-        return new Route(200.0, 200.0, resp);
+            @Override
+            public double getWeight(Edge edge) {
+                builderEdge e = (builderEdge) edge;
+                return e.getWeight(weighting);
+            }
+        }
+
+        edgeWeighter weighter = new edgeWeighter();
+
+        DijkstraShortestPathFinder finder = new DijkstraShortestPathFinder(builder.getGraph(), t, weighter);
+        Path route = finder.getPath(f);
+        if(route == null)
+        {
+            throw new RuntimeException("400");
+        }
+        double length = 0;
+        double time = 0;
+        List<Road> resp = new ArrayList<>();
+        for(Edge e : route.getEdges())
+        {
+            for(Road r : roads)
+            {
+                if(e.getID() == r.id) resp.add(r);
+                length += ((builderEdge) e).weight_len;
+                time += ((builderEdge) e).weight_time;
+
+            }
+        }
+
+        return new Route(length, time, resp.toArray(new Road[0]));
     }
 
     public Usages getUsage(Rectangle2D.Double frame) {
