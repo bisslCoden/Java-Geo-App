@@ -8,6 +8,10 @@ import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
 
+import org.geotools.graph.structure.basic.BasicEdge;
+import org.geotools.graph.structure.line.BasicXYNode;
+import org.geotools.graph.traverse.standard.DijkstraIterator;
+import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
@@ -139,7 +143,7 @@ public class MapData {
         List<Long> nodes = new ArrayList<>();
         List<Road> roads = new ArrayList<>();
 
-        class builderEdge extends BasicEdge{
+        class builderEdge extends BasicEdge {
             double weight_len = 0;
             double weight_time = 0;
 
