@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 import mapserviceGRPC.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.springframework.http.HttpStatus;
 import org.w3c.dom.css.Rect;
 
 import java.awt.*;
@@ -51,8 +52,9 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         //it as a normal reply
         if (response == null)
         {
-            Status err = Status.INTERNAL.withDescription("404");
-            responseObserver.onError(err.asRuntimeException());
+            //DEBUG
+            logger.info("Could not find the Object with id: " + id);
+            responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
         }
         else
         {
@@ -100,8 +102,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         //errorJSON and serialize it
         if (result.length == 0)
         {
-            Status err = Status.INTERNAL.withDescription("404");
-            responseObserver.onError(err.asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
         }
         else
         {
@@ -141,8 +142,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         //Nothing was found in this case
         if (result.length == 0)
         {
-            Status err = Status.INTERNAL.withDescription("404");
-            responseObserver.onError(err.asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
         }
         else
         {
@@ -165,10 +165,10 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
     {
         //DEBUG: check for correct info
         logger.info(String.format("\tGot request for (x %d|y %d|z %d)", request.getX(), request.getY(), request.getZ()));
-        List<String> filters = new ArrayList<>();
+        List<String> layers = new ArrayList<>();
         PNG_image response = null;
-        filters.addAll(request.getFiltersList());
-        ByteString g = Map.getInstance().getTile(request.getX(), request.getY(), request.getZ(), filters);
+        layers.addAll(request.getFiltersList());
+        ByteString g = Map.getInstance().getTile(request.getX(), request.getY(), request.getZ(), layers);
         System.out.println("Bystring result with length " + g.size());
         response = PNG_image.newBuilder().setData(g).build();
         responseObserver.onNext(response);
@@ -191,7 +191,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             response = gRPCBackend.buildResponseUsage(result);
         }catch (Exception e){
             System.out.println(e.getMessage());
-            responseObserver.onError(new RuntimeException("404"));
+            responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
         }
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -208,7 +208,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             response = gRPCBackend.builResponseRoute(result);
         }catch (Exception e){
             System.out.println(e.getMessage());
-            responseObserver.onError(new RuntimeException("404"));
+            responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
         }
         responseObserver.onNext(response);
         responseObserver.onCompleted();

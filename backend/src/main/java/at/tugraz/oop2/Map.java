@@ -19,7 +19,9 @@ public class Map {
     private Map() {}
 
     // methods
-    public void load(String location) {  _data = MapLoader.load(location); };
+    public void load(String location) {
+        _data = MapLoader.load(location);
+    };
 
     public Amenity getAmenity(Long id) {
         return _data.getAmenity(id);
@@ -28,6 +30,7 @@ public class Map {
         return _data.getAmenities(bbox, type, skip, take, total);
     }
     public Amenity[] getAmenities(Point2D.Double point, Double distance,String type, Long skip, Long take, Long[] total) {
+        System.out.println("Type: " + type);
         return _data.getAmenities(point, distance, type, skip, take, total);
     }
     public Road getRoad(Long id) {
@@ -36,8 +39,8 @@ public class Map {
     public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
         return _data.getRoads(frame, type, skip, take, total);
     }
-    public ByteString getTile(Integer x, Integer y, Integer z, List<String> filter) {
-        return MapRenderer.getTile(x, y, z, filter, _data);
+    public ByteString getTile(Integer x, Integer y, Integer z, List<String> layers) {
+        return MapRenderer.getTile(x, y, z, layers, _data);
     }
     public Route getRoute(Long from, Long to, boolean weighting) {
         return _data.getRoute(from, to, weighting);

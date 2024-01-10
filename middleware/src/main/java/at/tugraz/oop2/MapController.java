@@ -7,8 +7,12 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
@@ -42,7 +46,7 @@ public class MapController {
             @RequestParam(name = "point.d", required = false) Long pointD,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
-            @RequestParam(name = "amenity", defaultValue = "A") String amenity)
+            @RequestParam(name = "amenity", defaultValue = "") String amenity)
     {
         System.out.println(String.format("Point: %f %f; %d\nBBox: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", pointX,
                 pointY, pointD, bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, amenity));
@@ -50,13 +54,13 @@ public class MapController {
         if (bboxTLX != null && bboxTLY != null && bboxBRX != null && bboxBRY != null)
         {
             if (pointX != null && pointY != null && pointD != null)
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+                throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid Parameters");
             else bbox = true;
         }
         else if (pointX != null && pointY != null && pointD != null)
             bbox = false;
         else
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Parameters");
+            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid Parameters");
 
         Parser.parsed_params pp;
         String requested_List;
@@ -82,6 +86,7 @@ public class MapController {
     }
 
 
+
     //------------------------------------------------------------------------------------------------------------------
     // GET Mapping for BBox Requests for roads
     // @param params the parameters fetched from the HTTP Request
@@ -94,7 +99,7 @@ public class MapController {
             @RequestParam(name = "bbox.br.y") Double bboxBRY,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
-            @RequestParam(name = "road", defaultValue = "A") String road)
+            @RequestParam(name = "road", defaultValue = "") String road)
     {
         System.out.println(String.format("BBox: %f %f; %f %f\nskip: %d, take: %d, road: %s",
                 bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, road));
@@ -143,21 +148,50 @@ public class MapController {
             requested_road = gRPCMiddleware.requestObjID(Parser.parseID(id), false);
         } catch (Exception e){
             throw e;
+            /*ObjectMapper m = new ObjectMapper();
+            String res;
+            System.out.println("now throwing" + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "works?", e);
+            try{
+                res = m.writeValueAsString(new ));
+            }catch (Exception a)
+            {
+                throw e;
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+        */
         }
         return requested_road;
     }
 
-    @GetMapping("/tile/{z}/{x}/{y}.png")
+    @ExceptionHandler (GeoExcept.class)
+    public ResponseEntity<GeoExcept.ErrorMSG> handleCustomException(GeoExcept Exc)
+    {
+        return ResponseEntity.status(Exc.getStatus()).body(Exc.getMsg());
+    }
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<GeoExcept.ErrorMSG> handleBadInput(NoHandlerFoundException Exc)
+    {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new GeoExcept.ErrorMSG("No Handler found"));
+    }
+
+    @ExceptionHandler({MethodArgumentNotValidException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity<GeoExcept.ErrorMSG> handleInputexc(Exception Exc)
+    {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GeoExcept.ErrorMSG("Parameters Invalid"));
+    }
+
+    @GetMapping("/tile/{z}/{x}/{y}") //TODO: "/tile/{}/{}/{}" used in frontend?!
     byte[] getIMG(@PathVariable int z, @PathVariable int x, @PathVariable int y,
-                  @RequestParam (name = "filter", defaultValue = "motorway") List<String> filters)
+                  @RequestParam (name = "layers", defaultValue = "motorway") List<String> layers)
     {
         //DEBUG
         System.out.println(String.format("request for tile z: %d x: %d y: %d", z, x, y));
-        for(var f : filters)
+        for(var f : layers)
             System.out.println(f);
         mapserviceGRPC.PNG_image response = null;
         try {
-            response = gRPCMiddleware.request_Image(x, y, z, filters);
+            response = gRPCMiddleware.request_Image(x, y, z, layers);
         }catch (Exception e){
             throw e;
         }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import mapserviceGRPC.resJSON;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.springframework.http.HttpStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +61,8 @@ public class gRPCBackend {
 
     static resJSON buildResponseUsage(Usages result)
     {
+        if(result == null)
+            throw new GeoExcept(HttpStatus.NOT_FOUND, "not found");
         ObjectMapper objMapp = new ObjectMapper();
         String jsonString = null;
         try {
@@ -75,6 +78,8 @@ public class gRPCBackend {
 
     static resJSON builResponseRoute(Route result)
     {
+        if(result == null)
+            throw new GeoExcept(HttpStatus.NOT_FOUND, "not found");
         ObjectMapper objMap = new ObjectMapper();
         String json = null;
         try {

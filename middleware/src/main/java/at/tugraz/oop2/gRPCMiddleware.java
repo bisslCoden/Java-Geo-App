@@ -1,5 +1,7 @@
 package at.tugraz.oop2;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import mapserviceGRPC.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,13 +29,15 @@ public class gRPCMiddleware {
             //DEBUG: sending request
             System.out.println("Requesting " + (amenity ? "Amenitiy" : "Road") + " with ID " + id);
             response = client.getObjID(request).getJSON();
-        }catch (Exception e){
-            if(e.getMessage().contains("404"))
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+        }
+        catch (StatusRuntimeException g){
+            if (g.getStatus() == Status.NOT_FOUND)
+                throw new GeoExcept(HttpStatus.NOT_FOUND, "Obj with ID " + id + " was not found");
             else
-                throw e;
-            //throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No " + (amenity ? "amenity" : "road") + " with " +
-            //        "specified ID could be found!");
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+        }
+        catch (Exception e){
+            throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
@@ -64,11 +68,15 @@ public class gRPCMiddleware {
                 .build();
         try {
             response = client.getObjBbox(request).getJSON();
-        }catch (Exception e){
-            if(e.getMessage().contains("404"))
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+        }
+        catch (StatusRuntimeException g){
+            if (g.getStatus() == Status.NOT_FOUND)
+                throw new GeoExcept(HttpStatus.NOT_FOUND, "Bbox is Empty");
             else
-                throw e;
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+        }
+        catch (Exception e){
+            throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
@@ -97,11 +105,15 @@ public class gRPCMiddleware {
                 .build();
         try {
             response = client.getAmenityPoint(request).getJSON();
-        }catch (Exception e) {
-            if(e.getMessage().contains("404"))
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+        }
+        catch (StatusRuntimeException g){
+            if (g.getStatus() == Status.NOT_FOUND)
+                throw new GeoExcept(HttpStatus.NOT_FOUND, "Area around Point is Empty");
             else
-                throw e;
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+        }
+        catch (Exception e){
+            throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
@@ -116,22 +128,24 @@ public class gRPCMiddleware {
     // @param take paging info how many instances are requested
     // @param skip paging ingo how many instances are to be skipped
     //------------------------------------------------------------------------------------------------------------------
-    static PNG_image request_Image(int x, int y, int z, List<String> filters)
+    static PNG_image request_Image(int x, int y, int z, List<String> layers)
     {
         PNG_image resp_PNG = null;
         var client = MapApplication.getStub();
         req_image.Builder request = req_image.newBuilder().setX(x).setY(y).setZ(z);
-        for(var s : filters)
+        for(var s : layers)
             request.addFilters(s);
         try {
             resp_PNG = client.getImage(request.build());
         }
-        catch (Exception e)
-        {
-            if(e.getMessage().contains("404"))
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+        catch (StatusRuntimeException g){
+            if (g.getStatus() == Status.NOT_FOUND)
+                throw new GeoExcept(HttpStatus.NOT_FOUND, "Actually this should not be thrown i think");
             else
-                throw e;
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+        }
+        catch (Exception e){
+            throw e;
         }
         //DEBUG Verfiy that the response went through
         System.out.println("Sucessfully received a Response.");
@@ -144,12 +158,15 @@ public class gRPCMiddleware {
         req_route.Builder request = req_route.newBuilder().setStartID(start).setEndID(end).setLength(length);
         try {
             response = client.calcRoute(request.build());
-        }catch (Exception e)
-        {
-            if(e.getMessage().contains("404"))
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+        }
+        catch (StatusRuntimeException g){
+            if (g.getStatus() == Status.NOT_FOUND)
+                throw new GeoExcept(HttpStatus.NOT_FOUND, "Some Node is not Present");
             else
-                throw e;
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+        }
+        catch (Exception e){
+            throw e;
         }
         return response.getJSON();
     }
@@ -163,12 +180,15 @@ public class gRPCMiddleware {
         var client = MapApplication.getStub();
         try {
             response = client.getUsage(req.build());
-        }catch (Exception e)
-        {
-            if(e.getMessage().contains("404"))
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Did not find");
+        }
+        catch (StatusRuntimeException g){
+            if (g.getStatus() == Status.NOT_FOUND)
+                throw new GeoExcept(HttpStatus.NOT_FOUND, "This BBox for Usage is empty");
             else
-                throw e;
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+        }
+        catch (Exception e){
+            throw e;
         }
         return response.getJSON();
     }

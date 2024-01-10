@@ -13,6 +13,7 @@ import org.locationtech.jts.io.geojson.GeoJsonWriter;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -40,7 +41,7 @@ public class MapServiceServer {
         try {
             MapLogger.backendStartup(port, data_path);
             final MapServiceServer server = new MapServiceServer();
-            Map.getInstance().load("data/styria_reduced.osm");
+            Map.getInstance().load(data_path);
 
             server.start(port);
         }

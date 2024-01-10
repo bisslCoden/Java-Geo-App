@@ -7,10 +7,8 @@ import org.geotools.graph.path.Path;
 import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
-import org.geotools.graph.structure.basic.BasicEdge;
-import org.geotools.graph.structure.line.BasicXYNode;
-import org.geotools.graph.traverse.standard.DijkstraIterator;
-import org.geotools.referencing.GeodeticCalculator;
+
+import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.referencing.operation.MathTransform;
@@ -27,7 +25,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 
 import java.util.*;
-
+import java.util.Map;
 
 public class MapData {
     public MapData() {}
@@ -49,21 +47,22 @@ public class MapData {
 
     // methods
     public Amenity getAmenity(Long id) {
+        MapLogger.backendLogAmenityRequest((int)(long)id);
         for(Amenity amenity : _amenities)
         {
-            System.out.println(amenity.id);
             if(amenity.id == id) return amenity;
         }
         return null;
     }
     public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
+        MapLogger.backendLogAmenitiesRequest();
         List<Amenity> result = new ArrayList<Amenity>();
 
         total[0] = 0L;
         int skipped = 0, took = 0;
         for(Amenity amenity : _amenities) {
             // filter
-            if(!amenity.type.equals(type)) continue;
+            if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(frame, amenity.geom)) continue;
             ++total[0];
 
@@ -80,13 +79,14 @@ public class MapData {
         return result.toArray(new Amenity[0]);
     }
     public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long[] total) {
+        MapLogger.backendLogAmenitiesRequest();
         List<Amenity> result = new ArrayList<>();
 
         total[0] = 0L;
         int skipped = 0, took = 0;
         for(Amenity amenity : _amenities) {
             // filter
-            if(!amenity.type.equals(type)) continue;
+            if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(point, distance, amenity.geom)) continue;
             ++total[0];
 
@@ -104,18 +104,20 @@ public class MapData {
     }
 
     public Road getRoad(Long id) {
+        MapLogger.backendLogRoadRequest((int)(long)id);
         for(Road road : _roads)
             if(road.id == id) return road;
         return null;
     }
     public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
+        MapLogger.backendLogRoadsRequest();
         List<Road> result = new ArrayList<Road>();
 
         total[0] = 0L;
         int skipped = 0, took = 0;
         for(Road road : _roads) {
             // filter
-            if(!road.type.equals(type)) continue;
+            if(!type.isEmpty() && !road.type.equals(type)) continue;
             if(!isInside(frame, road.geom)) continue;
             ++total[0];
 
@@ -365,6 +367,7 @@ public class MapData {
     }
 
     public Usages getUsage(Rectangle2D.Double frame) {
+        System.out.println("Frame: " + frame.x + ","+frame.y+","+(frame.x+frame.width)+","+(frame.y+frame.height));
         // TODO: fix
         // transform frame
         Geometry frame_geom = new GeometryFactory().createPolygon(new Coordinate[] {
@@ -392,10 +395,13 @@ public class MapData {
             if(!isInside(frame, other.geom)) continue;
             Double value = shares.getOrDefault(key, 0.0);
 
-            Geometry target = null;
+            if(!other.geom.getGeometryType().equals("Polygon")) continue;
+            Geometry target = other.geom;
+            Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
+            target = JTS.toGeometry(bbox).intersection(target);
 
             try {
-                target = JTS.transform(other.geom, _transform);
+                target = JTS.transform(target, _transform);
             } catch (TransformException e) {
                 throw new RuntimeException(e);
             }
@@ -414,7 +420,13 @@ public class MapData {
             Double share = area / usage;
             usages.add(new Usage(type, share, area));
         }
-
+        Collections.sort(usages, new Comparator<Usage>() {
+            @Override
+            public int compare(Usage u1, Usage u2) {
+                return Double.compare(u1.share, u2.share);
+            }
+        });
+        if(usages.size() == 0) return null;
         return new Usages(usage, usages.toArray(new Usage[0]));
     }
 
