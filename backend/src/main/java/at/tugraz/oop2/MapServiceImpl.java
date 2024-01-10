@@ -201,7 +201,7 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
     public void calcRoute (req_route request, StreamObserver<resJSON> responseObserver)
     {
         logger.info(String.format("\tGot usage Route from node: %d to %d, Focus on %s",
-                request.getStartID(), request.getStartID(), request.getLength() ? "length" : "time"));
+                request.getStartID(), request.getEndID(), request.getLength() ? "length" : "time"));
         resJSON response = null;
         Route result =  Map.getInstance().getRoute(request.getStartID(), request.getEndID(), request.getLength());
         try {
