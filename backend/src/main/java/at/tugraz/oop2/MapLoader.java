@@ -1,18 +1,11 @@
 package at.tugraz.oop2;
-;
-import org.checkerframework.checker.units.qual.C;
-import org.geotools.graph.build.GraphBuilder;
-import org.geotools.graph.build.basic.BasicGraphBuilder;
-import org.geotools.graph.path.AStarShortestPathFinder;
+
 import org.geotools.graph.structure.Graph;
-//import org.geotools.graph.structure.Node;
-import org.geotools.graph.traverse.standard.AStarIterator;
 import org.locationtech.jts.geom.*;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.Attributes;
@@ -415,8 +408,9 @@ public class MapLoader {
                     // get polygon
                     Circle circle = getNext(member_index, relation.members, ways, nodes);
                     if (circle == null) {
-                        ++member_index;
-                        continue;
+                        return null;
+                        //++member_index;
+                        //continue;
                     }
 
                     // handle outer
@@ -552,44 +546,5 @@ public class MapLoader {
 
 
     private static void link(List<Way> ways, List<Node> nodes, Graph network) {
-//        GraphBuilder builder = new BasicGraphBuilder();
-//        org.geotools.graph.structure.Node node =  builder.buildNode();
-//        node.setID((long) 034);
-//        node.set
-//        node.setNode();
-//
-//        // find shortest path
-//        Graph graph;
-//        Node start;
-//        Node destination;
-//
-//        // create a strategy for weighting edges in the graph
-//        // in this case we are using geometry length
-//
-//        AStarIterator.EdgeWeigter length_weighter = new AStarIterator.EdgeWeighter() {
-//            public double getWeight(Edge e) {
-//                SimpleFeature feature = (SimpleFeature) e.getObject();
-//                Geometry geometry = (Geometry) feature.getDefaultGeometry();
-//                return gometry.getLength();
-//            }
-//        };
-//        AStarIterator.EdgeWieghter time_weighter = new AStarIterator.EdgeWeighter() {
-//
-//        }
-//
-//
-//
-//        AStarShortestPathFinder pf = new AStarShortestPathFinder(graph, start, target, );
-//        pf.calculate();
-//
-//        //find some destinations to calculate paths to
-//
-//        //calculate the paths
-//        for ( Iterator d = destinations.iterator(); d.hasNext(); ) {
-//            Node destination = (Node) d.next();
-//            Path path = pf.getPath( destination );
-//
-//            //do something with the path
-//        }
     }
 }

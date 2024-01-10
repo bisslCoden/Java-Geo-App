@@ -1,16 +1,6 @@
 package at.tugraz.oop2;
 
-import org.apache.commons.lang3.ObjectUtils;
-import org.geotools.graph.build.GraphBuilder;
-import org.geotools.graph.build.GraphGenerator;
-import org.geotools.graph.build.basic.BasicGraphBuilder;
-import org.geotools.graph.build.basic.BasicGraphGenerator;
-import org.geotools.graph.build.line.BasicLineGraphGenerator;
-import org.geotools.graph.build.line.LineGraphGenerator;
 import org.geotools.graph.structure.Graph;
-import org.geotools.graph.structure.Node;
-import org.geotools.graph.structure.line.XYNode;
-import org.hsqldb.lib.HsqlArrayHeap;
 import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
@@ -23,14 +13,11 @@ import org.locationtech.jts.geom.Geometry;
 
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.springframework.aop.target.HotSwappableTargetSource;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D;
 
 import java.util.*;
-import java.util.Map;
 
 public class MapData {
     public MapData() {}
@@ -213,25 +200,19 @@ public class MapData {
 
 
     private double getArea(Geometry geom, Rectangle2D.Double frame) {
-        try {
-            // check bounding box
-            Geometry target = new GeometryFactory().createGeometry(geom);
-            Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
-            target = JTS.toGeometry(bbox).intersection(target);
+        // check bounding box
+        Geometry target = new GeometryFactory().createGeometry(geom);
+        Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
+        target = JTS.toGeometry(bbox).intersection(target);
 
-            // transform geometry to target
-            try {
-                target = JTS.transform(target, _transform);
-            } catch (TransformException e) {
-                throw new RuntimeException(e);
-            }
-            // search in map objects
-            return target.getArea();
+        // transform geometry to target
+        try {
+            target = JTS.transform(target, _transform);
+        } catch (TransformException e) {
+            throw new RuntimeException(e);
         }
-        catch(Exception e) {
-            System.out.println("Failed!");
-            return 0.0;
-        }
+        // search in map objects
+        return target.getArea();
     }
 
 
