@@ -75,7 +75,7 @@ public class MapRenderer {
         System.out.print("[MapRenderer]: started rendering tile...");
 
         // create image
-        BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         Graphics2D gfx = image.createGraphics();
         HashMap settings = new HashMap<>();
         settings.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -86,7 +86,7 @@ public class MapRenderer {
 
         // draw to image
         gfx.setBackground(color_background);
-        gfx.clearRect(0, 0, 512, 512);
+        gfx.clearRect(0, 0, WIDTH, HEIGHT);
 
         ArrayList<Long> entities = new ArrayList<>();
         for(int index = 0; index < layers.size(); ++index) {
@@ -111,6 +111,12 @@ public class MapRenderer {
     }
 
     static private void RenderLayer(Rectangle2D.Double frame, String layer, Graphics2D gfx, MapData data, List<Long> entities) {
+        Rectangle2D.Double oversize_frame = new Rectangle2D.Double(
+                frame.x - frame.width * 0.1,
+                frame.y - frame.height * 0.1,
+                frame.width * 1.2,
+                frame.height * 1.2
+        );
 
         // set draw style
         Info info = Lookup.getOrDefault(layer, new Info(stroke_2px, color_residential));
@@ -120,29 +126,81 @@ public class MapRenderer {
         }
 
         for(Amenity amenity : data._amenities) {
-            if(!amenity.tags.containsValue(layer)) continue;
-            if(!data.isInside(frame, amenity.geom)) continue;
+            switch(layer) {
+                case "motorway":
+                case "trunk":
+                case "primary":
+                case "secondary":
+                case "forest":
+                case "residential":
+                case "vineyard":
+                case "grass":
+                case "railway": {
+                    if(!amenity.tags.containsValue(layer)) continue;
+                } break;
+                case "road": {
+                    if(!amenity.tags.containsKey("highway")) continue;
+                } break;
+                case "water": {
+                    if(!amenity.tags.containsKey(layer)) continue;
+                } break;
+                default:
+            }
+            if(!data.isInside(oversize_frame, amenity.geom)) continue;
 
             entities.add(amenity.id);
             renderGeometry(amenity.geom, frame, gfx);
         }
 
         for(Road road : data._roads) {
-            if(!layer.equals("road")) {
-                if(!road.tags.containsValue(layer)) continue;
+            switch(layer) {
+                case "motorway":
+                case "trunk":
+                case "primary":
+                case "secondary":
+                case "forest":
+                case "residential":
+                case "vineyard":
+                case "grass":
+                case "railway": {
+                    if(!road.tags.containsValue(layer)) continue;
+                } break;
+                case "road": {
+                    if(!road.tags.containsKey("highway")) continue;
+                } break;
+                case "water": {
+                    if(!road.tags.containsKey(layer)) continue;
+                } break;
+                default:
             }
-            else {
-                if(!road.tags.containsKey("highway"));
-            }
-            if(!data.isInside(frame, road.geom)) continue;
+            if(!data.isInside(oversize_frame, road.geom)) continue;
 
             entities.add(road.id);
             renderGeometry(road.geom, frame, gfx);
         }
 
         for(MapObject other : data._others) {
-            if(!other.tags.containsValue(layer)) continue;
-            if(!data.isInside(frame, other.geom)) continue;
+            switch(layer) {
+                case "motorway":
+                case "trunk":
+                case "primary":
+                case "secondary":
+                case "forest":
+                case "residential":
+                case "vineyard":
+                case "grass":
+                case "railway": {
+                    if(!other.tags.containsValue(layer)) continue;
+                } break;
+                case "road": {
+                    if(!other.tags.containsKey("highway")) continue;
+                } break;
+                case "water": {
+                    if(!other.tags.containsKey(layer)) continue;
+                } break;
+                default:
+            }
+            if(!data.isInside(oversize_frame, other.geom)) continue;
 
             entities.add(other.id);
             renderGeometry(other.geom, frame, gfx);
@@ -210,20 +268,17 @@ public class MapRenderer {
 
         // render line coordinates
         for(List<Coordinate> coord_list : line_lists) {
-            for(int coord_index = 0; coord_index < coord_list.size() - 1; ++coord_index) {
-                // get coordinates
-                Coordinate c0 = new Coordinate(coord_list.get(coord_index));
-                Coordinate c1 = new Coordinate(coord_list.get(coord_index + 1));
+            int[] xs = new int[coord_list.size()];
+            int[] ys = new int[coord_list.size()];
 
-                // translate & scale to canvas space
-                c0.x = (c0.x - frame.x) * WIDTH / frame.width;
-                c0.y = (c0.y - frame.y) * HEIGHT / frame.height;
-                c1.x = (c1.x - frame.x) * WIDTH / frame.width;
-                c1.y = (c1.y - frame.y) * HEIGHT / frame.height;
-
-                // draw
-                gfx.drawLine((int)c0.x, (int)c0.y, (int)c1.x, (int)c1.y);
+            // translate & scale to canvas space
+            for(int coord_index = 0; coord_index < coord_list.size(); ++coord_index) {
+                xs[coord_index] = (int)((coord_list.get(coord_index).x - frame.x) * WIDTH / frame.width);
+                ys[coord_index] = (int)((coord_list.get(coord_index).y - frame.y) * HEIGHT / frame.height);
             }
+
+            // draw
+            gfx.drawPolyline(xs, ys, coord_list.size());
         }
 
         // render polygon coordinates
@@ -236,8 +291,8 @@ public class MapRenderer {
 
             // translate & scale to canvas space
             for(int coord_index = 0; coord_index < x_list.size(); ++ coord_index) {
-                xs[coord_index] = (int)((x_list.get(coord_index) - frame.x) * (double)WIDTH / frame.width);
-                ys[coord_index] = (int)((y_list.get(coord_index) - frame.y) * (double)HEIGHT / frame.height);
+                xs[coord_index] = (int)((x_list.get(coord_index) - frame.x) * WIDTH / frame.width);
+                ys[coord_index] = (int)((y_list.get(coord_index) - frame.y) * HEIGHT / frame.height);
             }
 
             // draw
