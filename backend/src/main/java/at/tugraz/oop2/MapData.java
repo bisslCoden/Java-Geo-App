@@ -211,29 +211,27 @@ public class MapData {
         return new Usages(usage, usages.toArray(new Usage[0]));
     }
 
+
     private double getArea(Geometry geom, Rectangle2D.Double frame) {
-        double value = 0.0;
-
-        if(!geom.getGeometryType().equals("Polygon")) {
-            for(int index = 0; index < geom.getNumGeometries(); ++index) {
-                value += geom.getGeometryN(index).getArea();
-            }
-            return value;
-        }
-
-        // check bounding box
-        Geometry target = new GeometryFactory().createGeometry(geom);
-        Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
-        target = JTS.toGeometry(bbox).intersection(target);
-
-        // transform geometry to target
         try {
-            target = JTS.transform(target, _transform);
-        } catch (TransformException e) {
-            throw new RuntimeException(e);
+            // check bounding box
+            Geometry target = new GeometryFactory().createGeometry(geom);
+            Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
+            target = JTS.toGeometry(bbox).intersection(target);
+
+            // transform geometry to target
+            try {
+                target = JTS.transform(target, _transform);
+            } catch (TransformException e) {
+                throw new RuntimeException(e);
+            }
+            // search in map objects
+            return target.getArea();
         }
-        // search in map objects
-        return target.getArea();
+        catch(Exception e) {
+            System.out.println("Failed!");
+            return 0.0;
+        }
     }
 
 
