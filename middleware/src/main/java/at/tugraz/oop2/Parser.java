@@ -50,6 +50,9 @@ public class Parser {
             checkV(Dist);
             checkV(skip);
             checkV(take);
+            if (Dist <= 0)
+                throw new GeoExcept(HttpStatus.BAD_REQUEST, "Parameter out of bounds");
+
         }catch (Exception e)
         {
             throw e;

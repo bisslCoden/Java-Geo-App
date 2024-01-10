@@ -73,10 +73,14 @@ public class MapRenderer {
     static ByteString getTile(Integer x, Integer y, Integer z, List<String> layers, MapData data) {
         MapLogger.backendLogMapRequest(x, y, z, layers);
         System.out.print("[MapRenderer]: started rendering tile...");
+
         // create image
         BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
         Graphics2D gfx = image.createGraphics();
-
+        HashMap settings = new HashMap<>();
+        settings.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        settings.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        gfx.setRenderingHints(settings);
         // create bounding box
         Rectangle2D.Double frame = tileToBoundingBox(x, y, z);
 
@@ -85,7 +89,7 @@ public class MapRenderer {
         gfx.clearRect(0, 0, 512, 512);
 
         ArrayList<Long> entities = new ArrayList<>();
-        for(int index = layers.size() - 1; index >= 0; --index) {
+        for(int index = 0; index < layers.size(); ++index) {
             RenderLayer(frame, layers.get(index), gfx, data, entities);
         }
 
@@ -94,8 +98,8 @@ public class MapRenderer {
         try {
             ImageIO.write(image, "png", buffer);
 
-            // debug code
-            //ImageIO.write(image, "png", new File("data/tile_debug_render.png"));
+            // debug code TODO: disable
+            ImageIO.write(image, "png", new File("data/tile_debug_render.png"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -111,8 +115,9 @@ public class MapRenderer {
         // set draw style
         Info info = Lookup.getOrDefault(layer, new Info(stroke_2px, color_residential));
         gfx.setColor(info.color);
-        if(info.stroke != null) // TODO: maybe can be removed...
+        if(info.stroke != null) {// TODO: maybe can be removed...
             gfx.setStroke(info.stroke);
+        }
 
         for(Amenity amenity : data._amenities) {
             if(!amenity.tags.containsValue(layer)) continue;
@@ -123,7 +128,12 @@ public class MapRenderer {
         }
 
         for(Road road : data._roads) {
-            if(!road.tags.containsValue(layer)) continue;
+            if(!layer.equals("road")) {
+                if(!road.tags.containsValue(layer)) continue;
+            }
+            else {
+                if(!road.tags.containsKey("highway"));
+            }
             if(!data.isInside(frame, road.geom)) continue;
 
             entities.add(road.id);
