@@ -144,7 +144,7 @@ public class MapRenderer {
                 case "water": {
                     if(!amenity.tags.containsKey(layer)) continue;
                 } break;
-                default:
+                default: continue;
             }
             if(!data.isInside(oversize_frame, amenity.geom)) continue;
 
@@ -171,7 +171,7 @@ public class MapRenderer {
                 case "water": {
                     if(!road.tags.containsKey(layer)) continue;
                 } break;
-                default:
+                default: continue;
             }
             if(!data.isInside(oversize_frame, road.geom)) continue;
 
@@ -198,7 +198,7 @@ public class MapRenderer {
                 case "water": {
                     if(!other.tags.containsKey(layer)) continue;
                 } break;
-                default:
+                default: continue;
             }
             if(!data.isInside(oversize_frame, other.geom)) continue;
 
