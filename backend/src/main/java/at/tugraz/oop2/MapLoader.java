@@ -501,43 +501,47 @@ public class MapLoader {
 
     private static Circle getNext(int index, List<Relation.Member> members, List<Way> ways, List<Node> nodes) {
         List<Long> polygon = new ArrayList<>();
+        List<Long> used = new ArrayList<>();
         Circle circle = new Circle();
 
-        for(int member_index = index; index < members.size(); ++index) {
-            // get way of member
-            if(members.get(member_index).type.equals("relation")) continue; // TODO: handle
-            Integer way_id = wayLookup.getOrDefault(members.get(member_index).reference, null);
-            if(way_id == null) return null;
-            Way way = ways.get(way_id);
+        for(int outer_index = index; outer_index < members.size(); ++outer_index) {
+            if(polygon.contains(members.get(outer_index).reference)) continue;
+            for (int member_index = index; member_index < members.size(); ++member_index) {
+                // get way of member
+                if (members.get(member_index).type.equals("relation")) continue; // TODO: handle
+                Integer way_id = wayLookup.getOrDefault(members.get(member_index).reference, null);
+                if (way_id == null) return null;
+                Way way = ways.get(way_id);
 
-            // try to link
-            if(polygon.size() == 0) { // attach first element
-                circle.index = member_index;
-                circle.role = members.get(member_index).role;
-            }
-            else {
-                Long con = polygon.get(polygon.size() - 1);
-                Long beg = way.references.get(0);
-                Long end = way.references.get(way.references.size() - 1);
+                // try to link
+                if (polygon.size() == 0) { // attach first element
+                    circle.index = member_index;
+                    circle.role = members.get(member_index).role;
+                } else {
+                    Long con = polygon.get(polygon.size() - 1);
+                    Long beg = way.references.get(0);
+                    Long end = way.references.get(way.references.size() - 1);
 
-                if(con.equals(beg)) { } // normal link
-                else if(con.equals(end)) { // reverse link
-                    Collections.reverse(way.references);
+                    if (con.equals(beg)) {
+                    } // normal link
+                    else if (con.equals(end)) { // reverse link
+                        Collections.reverse(way.references);
+                    } else continue; // cannot link next member
                 }
-                else return null; // cannot link next member
-            }
 
-            polygon.addAll(way.references);
-            circle.index++;
+                used.add(members.get(member_index).reference);
+                polygon.addAll(way.references);
+                if(member_index + 1 > circle.index) circle.index = member_index + 1;
 
-            // check for completed polygon
-            Long beg = polygon.get(0);
-            Long end = polygon.get(polygon.size() - 1);
+                // check for completed polygon
+                Long beg = polygon.get(0);
+                Long end = polygon.get(polygon.size() - 1);
 
-            if(beg.equals(end)) {
-                List<Coordinate> coordinates = getCoordinates(polygon, nodes);
-                circle.polygon = new GeometryFactory().createPolygon(coordinates.toArray(new Coordinate[0]));
-                return circle;
+                if (beg.equals(end)) {
+                    List<Coordinate> coordinates = getCoordinates(polygon, nodes);
+                    circle.polygon = new GeometryFactory().createPolygon(coordinates.toArray(new Coordinate[0]));
+                    return circle;
+                }
             }
         }
 
