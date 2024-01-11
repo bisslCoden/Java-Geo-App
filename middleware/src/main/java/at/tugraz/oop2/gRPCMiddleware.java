@@ -162,8 +162,10 @@ public class gRPCMiddleware {
         catch (StatusRuntimeException g){
             if (g.getStatus() == Status.NOT_FOUND)
                 throw new GeoExcept(HttpStatus.NOT_FOUND, "Some Node is not Present");
+            else if (g.getStatus() == Status.INVALID_ARGUMENT)
+                throw new GeoExcept(HttpStatus.BAD_REQUEST, "There is no Route between these points");
             else
-                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Could not reach backend");
+                throw new GeoExcept(HttpStatus.INTERNAL_SERVER_ERROR, "Having some trouble with the backend");
         }
         catch (Exception e){
             throw e;

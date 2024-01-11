@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import lombok.extern.java.Log;
 import mapserviceGRPC.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -203,12 +204,23 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         logger.info(String.format("\tGot usage Route from node: %d to %d, Focus on %s",
                 request.getStartID(), request.getEndID(), request.getLength() ? "length" : "time"));
         resJSON response = null;
-        Route result =  Map.getInstance().getRoute(request.getStartID(), request.getEndID(), request.getLength());
         try {
+            Route result =  Map.getInstance().getRoute(request.getStartID(), request.getEndID(), request.getLength());
             response = gRPCBackend.builResponseRoute(result);
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-            responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
+        }catch (GeoExcept g)
+        {
+            if(g.status == HttpStatus.NOT_FOUND)
+            {
+                System.out.println(g.getMessage());
+                responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
+            }
+            else {
+                responseObserver.onError(Status.INVALID_ARGUMENT.asRuntimeException());
+            }
+        }
+        catch (Exception e){
+            System.out.println("Wooow something went real wront: " + e.getMessage());
+            responseObserver.onError(Status.INTERNAL.asRuntimeException());
         }
         responseObserver.onNext(response);
         responseObserver.onCompleted();
