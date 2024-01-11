@@ -209,7 +209,7 @@ public class MapData {
         }
         if(f == null || t == null)
         {
-            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Invalid parameter");
+            return null;
         }
 
         if(Objects.equals(from, to))
