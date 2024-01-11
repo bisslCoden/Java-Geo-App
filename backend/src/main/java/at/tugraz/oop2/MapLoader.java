@@ -575,8 +575,6 @@ public class MapLoader {
         GraphBuilder builder = new BasicGraphBuilder();
         HashMap<Long, MapData.builderNode> geo_nodes = new HashMap<>();
 
-        Collection<Node> builder_nodes = builder.getGraph().getNodes();
-
         for (Road r : roads) {
             if (r.child_ids.size() < 2 || !r.geom.getGeometryType().equals("LineString")) continue;
 
