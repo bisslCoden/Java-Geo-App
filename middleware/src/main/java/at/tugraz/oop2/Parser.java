@@ -41,13 +41,12 @@ public class Parser {
         else throw new GeoExcept(HttpStatus.BAD_REQUEST, "weight neither time or length");
     }
 
-    public static parsed_params checkBoundsPoint(Double pointX, Double pointY,Long Dist, Long skip, Long take, String type)
+    public static parsed_params checkBoundsPoint(Double pointX, Double pointY,Double Dist, Long skip, Long take, String type)
     {
         //DEBUG
         try {
             checkX(pointX);
             checkY(pointY);
-            checkV(Dist);
             checkV(skip);
             checkV(take);
             if (Dist <= 0)
@@ -292,10 +291,10 @@ public class Parser {
         double[] bbox_tl = {0, 0};
         double[] bbox_br = {0, 0};
         double[] point = {0, 0};
-        Long dist = 0L;
+        double dist = 0L;
         Long skip = DEFAULT_SKIP;
         Long take = DEFAULT_TAKE;
-        parsed_params(double[] point, Long dist, Long skip, Long take, String type)
+        parsed_params(double[] point, double dist, Long skip, Long take, String type)
         {
             this.bbox = false;
             this.point = point;

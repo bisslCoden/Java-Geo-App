@@ -43,12 +43,12 @@ public class MapController {
             @RequestParam(name = "bbox.br.y", required = false) Double bboxBRY,
             @RequestParam(name = "point.x", required = false) Double pointX,
             @RequestParam(name = "point.y", required = false) Double pointY,
-            @RequestParam(name = "point.d", required = false) Long pointD,
+            @RequestParam(name = "point.d", required = false) Double pointD,
             @RequestParam(name = "skip", defaultValue = "0") Long skip,
             @RequestParam(name = "take", defaultValue = "50") Long take,
             @RequestParam(name = "amenity", defaultValue = "") String amenity)
     {
-        System.out.println(String.format("Point: %f %f; %d\nBBox: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", pointX,
+        System.out.println(String.format("Point: %f %f; %f\nBBox: %f %f; %f %f\nskip: %d, take: %d, amenity: %s", pointX,
                 pointY, pointD, bboxTLX, bboxTLY, bboxBRX, bboxBRY ,skip, take, amenity));
         Boolean bbox = null;
         if (bboxTLX != null && bboxTLY != null && bboxBRX != null && bboxBRY != null)
