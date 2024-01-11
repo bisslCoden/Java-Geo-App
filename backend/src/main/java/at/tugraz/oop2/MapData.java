@@ -206,7 +206,7 @@ public class MapData {
             return null;
         }
 
-        if(Objects.equals(from, to))
+        if(from.equals(to))
         {
             return new Route((double) 0, (double) 0, new Road[0]);
         }
