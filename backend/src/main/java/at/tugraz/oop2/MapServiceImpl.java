@@ -211,10 +211,11 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
         {
             if(g.status == HttpStatus.NOT_FOUND)
             {
-                System.out.println(g.getMessage());
+                System.out.println(g.msg);
                 responseObserver.onError(Status.NOT_FOUND.asRuntimeException());
             }
             else {
+                System.out.println(g.msg);
                 responseObserver.onError(Status.INVALID_ARGUMENT.asRuntimeException());
             }
         }
@@ -222,7 +223,10 @@ public class MapServiceImpl extends mapserviceGrpc.mapserviceImplBase{
             System.out.println("Wooow something went real wront: " + e.getMessage());
             responseObserver.onError(Status.INTERNAL.asRuntimeException());
         }
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        if(response != null) {
+            System.out.println(response);
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
     }
 }
