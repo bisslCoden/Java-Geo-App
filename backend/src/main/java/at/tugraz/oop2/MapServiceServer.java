@@ -1,21 +1,11 @@
 package at.tugraz.oop2;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.io.geojson.GeoJsonWriter;
+import io.grpc.Grpc;
 
-
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.logging.Logger;
+import java.io.IOException;
 
 public class MapServiceServer {
     public static final Logger logger = Logger.getLogger(MapServiceServer.class.getName());

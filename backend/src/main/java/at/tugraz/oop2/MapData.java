@@ -1,17 +1,18 @@
 package at.tugraz.oop2;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.geotools.graph.build.GraphBuilder;
+import org.geotools.graph.build.GraphGenerator;
 import org.geotools.graph.build.basic.BasicGraphBuilder;
-import org.geotools.graph.path.DijkstraShortestPathFinder;
-import org.geotools.graph.path.Path;
-import org.geotools.graph.structure.Edge;
+import org.geotools.graph.build.basic.BasicGraphGenerator;
+import org.geotools.graph.build.line.BasicLineGraphGenerator;
+import org.geotools.graph.build.line.LineGraphGenerator;
 import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
-
 import org.geotools.graph.structure.basic.BasicEdge;
 import org.geotools.graph.structure.line.BasicXYNode;
-import org.geotools.graph.traverse.standard.DijkstraIterator;
-import org.geotools.referencing.GeodeticCalculator;
+import org.geotools.graph.structure.line.XYNode;
+import org.hsqldb.lib.HsqlArrayHeap;
 import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
@@ -60,51 +61,59 @@ public class MapData {
     }
     public Amenity[] getAmenities(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
         MapLogger.backendLogAmenitiesRequest();
-        List<Amenity> result = new ArrayList<Amenity>();
+        List<Amenity> result = new ArrayList<>();
 
-        total[0] = 0L;
-        int skipped = 0, took = 0;
+        // find amenities
         for(Amenity amenity : _amenities) {
             // filter
             if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(frame, amenity.geom)) continue;
-            ++total[0];
 
-            // skip
-            if(skipped < skip) { ++skipped; continue; }
-
-            // take
-            if(took < take) {
-                result.add(amenity);
-                ++took;
-            }
+            // add
+            result.add(amenity);
         }
 
-        return result.toArray(new Amenity[0]);
+        // sort list
+        Collections.sort(result, new Comparator<Amenity>() {
+            @Override
+            public int compare(Amenity o1, Amenity o2) {
+                return Long.compare(o1.id, o2.id);
+            }
+        });
+
+        // skip, take and return
+        total[0] = (long)result.size();
+        int from = (int)Math.min(skip, result.size());
+        int to = from + (int)Math.min(take, result.size());
+        return result.subList(from, to).toArray(new Amenity[0]);
     }
     public Amenity[] getAmenities(Point2D.Double point, Double distance, String type, Long skip, Long take, Long[] total) {
         MapLogger.backendLogAmenitiesRequest();
         List<Amenity> result = new ArrayList<>();
 
-        total[0] = 0L;
-        int skipped = 0, took = 0;
+        // find amenities
         for(Amenity amenity : _amenities) {
             // filter
             if(!type.isEmpty() && !amenity.type.equals(type)) continue;
             if(!isInside(point, distance, amenity.geom)) continue;
-            ++total[0];
 
-            // skip
-            if(skipped < skip) { ++skipped; continue; }
-
-            // take
-            if(took < take) {
-                result.add(amenity);
-                ++took;
-            }
+            // add
+            result.add(amenity);
         }
 
-        return result.toArray(new Amenity[0]);
+        // sort list
+        Collections.sort(result, new Comparator<Amenity>() {
+            @Override
+            public int compare(Amenity o1, Amenity o2) {
+                return Long.compare(o1.id, o2.id);
+            }
+        });
+
+        // skip, take and return
+        total[0] = (long)result.size();
+        int from = (int)Math.min(skip, result.size());
+        int to = from + (int)Math.min(take, result.size());
+        return result.subList(from, to).toArray(new Amenity[0]);
     }
 
     public Road getRoad(Long id) {
@@ -114,28 +123,32 @@ public class MapData {
         return null;
     }
     public Road[] getRoads(Rectangle2D.Double frame, String type, Long skip, Long take, Long[] total) {
-        MapLogger.backendLogRoadsRequest();
-        List<Road> result = new ArrayList<Road>();
+        MapLogger.backendLogAmenitiesRequest();
+        List<Road> result = new ArrayList<>();
 
-        total[0] = 0L;
-        int skipped = 0, took = 0;
+        // find amenities
         for(Road road : _roads) {
             // filter
             if(!type.isEmpty() && !road.type.equals(type)) continue;
             if(!isInside(frame, road.geom)) continue;
-            ++total[0];
 
-            // skip
-            if(skipped < skip) { ++skipped; continue;}
-
-            // take
-            if(took < take) {
-                result.add(road);
-                ++took;
-            }
+            // add
+            result.add(road);
         }
 
-        return result.toArray(new Road[0]);
+        // sort list
+        Collections.sort(result, new Comparator<Road>() {
+            @Override
+            public int compare(Road o1, Road o2) {
+                return Long.compare(o1.id, o2.id);
+            }
+        });
+
+        // skip, take and return
+        total[0] = (long)result.size();
+        int from = (int)Math.min(skip, result.size());
+        int to = from + (int)Math.min(take, result.size());
+        return result.subList(from, to).toArray(new Road[0]);
     }
 
     static class builderNode extends BasicXYNode {
@@ -233,8 +246,6 @@ public class MapData {
     }
 
     public Usages getUsage(Rectangle2D.Double frame) {
-        System.out.println("Frame: " + frame.x + ","+frame.y+","+(frame.x+frame.width)+","+(frame.y+frame.height));
-        // TODO: fix
         // transform frame
         Geometry frame_geom = new GeometryFactory().createPolygon(new Coordinate[] {
                 new Coordinate(frame.x, frame.y),
@@ -243,38 +254,40 @@ public class MapData {
                 new Coordinate(frame.x, frame.y + frame.height),
                 new Coordinate(frame.x, frame.y),
         });
-        Geometry frame_trans = null;
         try {
-            frame_trans = JTS.transform(frame_geom, _transform);
+            frame_geom = JTS.transform(frame_geom, _transform);
         } catch (TransformException e) {
             throw new RuntimeException(e);
         }
 
         // calculate areas
         HashMap<String, Double> shares = new HashMap<>();
-        Double usage = frame_trans.getArea();
+        Double usage = frame_geom.getArea();
+        List<MapObject> objects = new ArrayList<>();
 
-        // search in map objects
+        for(Amenity amenity : _amenities) {
+            if(!amenity.tags.containsKey("landuse")) continue;
+            if(!isInside(frame, amenity.geom)) continue;
+            objects.add(amenity);
+        }
+        for(Road road : _roads) {
+            if(!road.tags.containsKey("landuse")) continue;
+            if(!isInside(frame, road.geom)) continue;
+            objects.add(road);
+        }
         for(MapObject other : _others) {
-            String key = other.tags.getOrDefault("landuse", null);
-            if(key == null) continue;
+            if(!other.tags.containsKey("landuse")) continue;
             if(!isInside(frame, other.geom)) continue;
+            objects.add(other);
+        }
+
+        for(MapObject object : objects) {
+            // get or create area entry in map
+            String key = object.tags.get("landuse");
             Double value = shares.getOrDefault(key, 0.0);
 
-            if(!other.geom.getGeometryType().equals("Polygon")) continue;
-            Geometry target = other.geom;
-            Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
-            target = JTS.toGeometry(bbox).intersection(target);
-
-            try {
-                target = JTS.transform(target, _transform);
-            } catch (TransformException e) {
-                throw new RuntimeException(e);
-            }
-
-
-            Double area = target.getArea();
-            value += area;
+            // get area
+            value += getArea(object.geom, frame);
             shares.put(key, value);
         }
 
@@ -292,8 +305,26 @@ public class MapData {
                 return Double.compare(u1.share, u2.share);
             }
         });
+
         if(usages.size() == 0) return null;
         return new Usages(usage, usages.toArray(new Usage[0]));
+    }
+
+
+    private double getArea(Geometry geom, Rectangle2D.Double frame) {
+        // check bounding box
+        Geometry target = new GeometryFactory().createGeometry(geom);
+        Envelope bbox = new Envelope(frame.x, frame.x + frame.width, frame.y, frame.y + frame.height);
+        target = JTS.toGeometry(bbox).intersection(target);
+
+        // transform geometry to target
+        try {
+            target = JTS.transform(target, _transform);
+        } catch (TransformException e) {
+            throw new RuntimeException(e);
+        }
+        // search in map objects
+        return target.getArea();
     }
 
 
