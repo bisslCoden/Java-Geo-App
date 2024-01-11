@@ -1,4 +1,5 @@
 package at.tugraz.oop2;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.basic.BasicGraphBuilder;
 
@@ -7,12 +8,17 @@ import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.basic.BasicEdge;
 import org.geotools.graph.structure.line.BasicXYNode;
+import org.geotools.referencing.CRS;
 import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.*;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.Attributes;
@@ -557,68 +563,51 @@ public class MapLoader {
 
 
     private static Graph link(List<Road> roads, List<RawNode> nodes) {
+        MathTransform transform = null;
+        try {
+            CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:4326");
+            CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:31256");
+            transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
+        } catch (FactoryException e) {
+            throw new RuntimeException(e);
+        }
+
         GraphBuilder builder = new BasicGraphBuilder();
-        List<Long> geo_nodes = new ArrayList<>();
-        List<Road> geo_roads = new ArrayList<>();
+        HashMap<Long, MapData.builderNode> geo_nodes = new HashMap<>();
 
         Collection<Node> builder_nodes = builder.getGraph().getNodes();
 
 
         for (Road r : roads) {
-            if (r.child_ids.size() < 2) continue;
+            if (r.child_ids.size() < 2 || !r.geom.getGeometryType().equals("LineString")) continue;
 
-            MapData.builderNode a = null;
-            if (!geo_nodes.contains(r.child_ids.get(0))) {
-                geo_nodes.add(r.child_ids.get(0));
+            MapData.builderNode a = geo_nodes.getOrDefault(r.child_ids.get(0), null);
+            if (a == null) {
                 a = new MapData.builderNode(r.child_ids.get(0));
+                geo_nodes.put(r.child_ids.get(0), a);
                 builder.addNode(a);
             }
-            MapData.builderNode b = null;
-            if (!geo_nodes.contains(r.child_ids.get(r.child_ids.size() - 1))) {
-                geo_nodes.add(r.child_ids.get(r.child_ids.size() - 1));
+            MapData.builderNode b = geo_nodes.getOrDefault(r.child_ids.get(r.child_ids.size() - 1), null);;
+            if (b == null) {
                 b = new MapData.builderNode(r.child_ids.get(r.child_ids.size() - 1));
+                geo_nodes.put(r.child_ids.get(r.child_ids.size() - 1), b);
                 builder.addNode(b);
             }
-            if ((a == null && !geo_nodes.contains(r.child_ids.get(0)) || b == null && !geo_nodes.contains(r.child_ids.get(r.child_ids.size() - 1)))) {
-                builder_nodes = builder.getGraph().getNodes();
-            }
-            if (a == null) {
-                for (Node find_node : builder_nodes) {
-                    if (Objects.equals(((MapData.builderNode) find_node).myID, r.child_ids.get(0))) {
-                        a = (MapData.builderNode) find_node;
-                        break;
-                    }
-                }
-            }
-            if (b == null) {
-                for (Node find_node : builder_nodes) {
-                    if (Objects.equals(((MapData.builderNode) find_node).myID, r.child_ids.get(r.child_ids.size() - 1))) {
-                        b = (MapData.builderNode) find_node;
-                        break;
-                    }
-                }
-            }
-            GeodeticCalculator calc = new GeodeticCalculator();
-            double weight = 0;
-            Coordinate[] coordinates = r.geom.getCoordinates();
-            Coordinate last = new Coordinate(0, 0);
-            for (Coordinate c : coordinates) {
-                if (last.x == 0 && last.y == 0)
-                {
-                    last = c;
-                    continue;
-                }
 
-                calc.setStartingGeographicPoint(last.x, last.y);
-                calc.setDestinationGeographicPoint(c.y, c.y);
 
-                weight += calc.getOrthodromicDistance();
-                last = c;
+            LineString transformed_road = null;
+
+            try {
+               transformed_road = (LineString) JTS.transform(r.geom, transform);
+            } catch (TransformException e) {
+                throw new RuntimeException(e);
             }
+
+            double weight = transformed_road.getLength();
+
             String speed = r.tags.getOrDefault("maxspeed", "30");
             MapData.builderEdge e = new MapData.builderEdge(r.id, a, b, weight, speed);
 
-            geo_roads.add(r);
             builder.addEdge(e);
         }
         return builder.getGraph();

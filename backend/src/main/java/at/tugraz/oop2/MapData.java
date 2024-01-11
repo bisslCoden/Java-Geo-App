@@ -174,16 +174,19 @@ public class MapData {
             myID = id;
             weight_len = w;
 
+            double parsed_speed = 0;
             try
             {
-                weight_time = Double.parseDouble(speed);
+                parsed_speed = Double.parseDouble(speed);
             }
             catch (NumberFormatException e)
             {
                 // not a valid speed
-                weight_time = 30;
+                parsed_speed = 30;
             }
-            weight_len /= weight_time;
+            weight_time = weight_len/(parsed_speed*1000/60);
+
+
         }
         double getWeight(boolean len){
             if(len) return weight_len;
