@@ -577,7 +577,6 @@ public class MapLoader {
 
         Collection<Node> builder_nodes = builder.getGraph().getNodes();
 
-
         for (Road r : roads) {
             if (r.child_ids.size() < 2 || !r.geom.getGeometryType().equals("LineString")) continue;
 
@@ -593,7 +592,6 @@ public class MapLoader {
                 geo_nodes.put(r.child_ids.get(r.child_ids.size() - 1), b);
                 builder.addNode(b);
             }
-
 
             LineString transformed_road = null;
 

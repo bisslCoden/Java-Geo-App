@@ -98,7 +98,6 @@ public class MapRenderer {
         try {
             ImageIO.write(image, "png", buffer);
 
-            // debug code TODO: disable
             ImageIO.write(image, "png", new File("data/tile_debug_render.png"));
         } catch (IOException e) {
             throw new RuntimeException(e);
