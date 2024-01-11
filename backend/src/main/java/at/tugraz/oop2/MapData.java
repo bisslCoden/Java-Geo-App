@@ -212,6 +212,7 @@ public class MapData {
         edgeWeighter weighter = new edgeWeighter();
 
         DijkstraShortestPathFinder finder = new DijkstraShortestPathFinder(_network, t, weighter);
+        finder.calculate();
         Path route = finder.getPath(f);
         if(route == null)
         {
@@ -226,7 +227,6 @@ public class MapData {
             resp.add(r);
             length += ((builderEdge) e).weight_len;
             time += ((builderEdge) e).weight_time;
-
         }
 
         return new Route(length, time, resp.toArray(new Road[0]));
