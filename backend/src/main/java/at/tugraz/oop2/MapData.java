@@ -193,12 +193,6 @@ public class MapData {
 
     public Route getRoute(Long from, Long to, boolean weighting) {
 
-
-        if(from == null || to == null)
-        {
-            throw new GeoExcept(HttpStatus.BAD_REQUEST, "Missing parameter");
-        }
-
         Collection<Node> builder_nodes = _network.getNodes();
         builderNode f = null;
         builderNode t = null;
