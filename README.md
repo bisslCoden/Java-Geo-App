@@ -7,9 +7,7 @@ A Java-based Geospatial Full stack application developed as part of a university
 - Built shortest-path routing using the Dijkstra's algorithm algorithm
 
 # What I learned
-- Designing and structuring scalable Java backend services
+- Designing and structuring scalable Java backend services using SpringBoot and gRPC
 - Building RESTful APIs and backend communication layers
 - Working with geospatial data, coordinate systems, and spatial queries
 
-
-![architecture](samples/architecture.png)
